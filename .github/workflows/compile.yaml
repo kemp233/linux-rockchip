@@ -97,10 +97,10 @@ jobs:
           gh release create "${TAG}" \
             --repo kemp233/linux-rockchip \
             --title "rk3566 BSP kernel ${KVER}" \
-            --notes "rk3566-lb2004.dtb + Image + modules | Linux ${KVER}\n\nCommit: ${{ github.sha }}" \
+            --notes "rk3566-lb2004.dtb + Image + modules | Linux ${KVER} | Commit: ${{ github.sha }}" \
             arch/arm64/boot/Image \
             arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
             /tmp/rk3566-modules.tar.gz
           echo "Release created: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
         env:
-          GH_TOKEN: *** secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
