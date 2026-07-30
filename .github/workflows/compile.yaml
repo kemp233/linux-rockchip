@@ -65,12 +65,22 @@ jobs:
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tail -5
           echo "Module count: $(find . -name '*.ko' | wc -l)"
 
-      - name: Upload artifacts (Image + dtb + modules)
+          echo "=== Package modules into tarball ==="
+          tar czf /tmp/rk3566-modules.tar.gz $(find . -name '*.ko' -printf '%P ') 2>/dev/null
+          ls -lh /tmp/rk3566-modules.tar.gz
+
+      - name: Upload artifacts (Image + dtb)
         uses: actions/upload-artifact@v6
         with:
           name: rk3566-kernel-bsp
           path: |
             arch/arm64/boot/Image
             arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
-            *.ko
+          retention-days: 30
+
+      - name: Upload modules
+        uses: actions/upload-artifact@v6
+        with:
+          name: rk3566-modules
+          path: /tmp/rk3566-modules.tar.gz
           retention-days: 30
