@@ -47,7 +47,7 @@ jobs:
           cpp -P -x assembler-with-cpp -undef -D__DTS__ -I include \
             arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts \
             arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp
-          dtc -I dts -O dtb -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
+          dtc -I dts -O dtb -f -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
             arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp 2>&1
           rm -f arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp
 
