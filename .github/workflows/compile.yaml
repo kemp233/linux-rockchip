@@ -14,7 +14,7 @@ jobs:
       OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/"
     steps:
       - name: Checkout kernel source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -66,7 +66,7 @@ jobs:
           echo "Module count: $(find . -name '*.ko' | wc -l)"
 
       - name: Upload artifacts (Image + dtb + modules)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rk3566-kernel-bsp
           path: |
