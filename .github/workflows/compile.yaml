@@ -1,4 +1,4 @@
-name: Build kernel on PR
+name: Build rk3566-lb2004 dtb
 
 on:
   workflow_dispatch:
@@ -8,63 +8,49 @@ on:
 jobs:
   Build:
     name: Compile and upload kernel
-    runs-on: rockchip
-    if: ${{ github.repository_owner == 'armbian' }}
+    runs-on: ubuntu-24.04-arm
+    if: ${{ github.repository_owner == 'armbian' || github.repository_owner == 'kemp233' }}
     env:
-      OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/" # This is picked up by the Docker launcher automatically
+      OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/"
     steps:
-      # Login to ghcr.io, for later uploading rootfs to ghcr.io
-      - name: Docker Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }} # GitHub username or org
-          password: ${{ secrets.GITHUB_TOKEN }} # GitHub actions builtin token. repo has to have pkg access.
-
-      - name: Checkout build repo
+      - name: Checkout kernel source
         uses: actions/checkout@v4
         with:
-          repository: armbian/build
-          ref: main
           fetch-depth: 1
-          clean: false
 
-      - name: Build arm64 kernel at ${{ github.event.pull_request.head.sha }}
-        id: kernel-arm64
+      - name: Install toolchain
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc
 
-          rm -rf output/debs/*
-          mkdir -p userpatches/extensions/
-          cat <<- EOF > userpatches/extensions/pull-request.sh
-          function post_family_config__force_commit_for_rk3588() {
-              KERNELBRANCH="commit:${{ github.event.pull_request.head.sha }}"
-          }
-          EOF
-          bash ./compile.sh kernel \
-          SHARE_LOG=yes \
-          BOARD=orangepi5 \
-          BRANCH=vendor \
-          ENABLE_EXTENSIONS="pull-request"
-
-      - name: Build armhf kernel at ${{ github.event.pull_request.head.sha }}
-        id: kernel-armhf
+      - name: Compile rk3566-lb2004 dtb
         run: |
-
-          mkdir -p userpatches/extensions/
-          cat <<- EOF > userpatches/extensions/pull-request.sh
-          function post_family_config__force_commit_for_rk3588() {
-              KERNELBRANCH="commit:${{ github.event.pull_request.head.sha }}"
-          }
+          echo "=== 配置 .config ==="
+          cp arch/arm64/configs/rockchip_defconfig .config 2>/dev/null || make ARCH=arm64 defconfig
+          sed -i 's/CONFIG_WERROR=y/CONFIG_WERROR=n/' .config
+          cat >> .config << EOF
+          CONFIG_DTC_SYMBOLS=y
+          CONFIG_LOCALVERSION_AUTO=n
+          CONFIG_CROSS_MEMORY_ATTACH=y
+          CONFIG_CPU_ISOLATION=y
           EOF
-          bash ./compile.sh kernel \
-          SHARE_LOG=yes \
-          BOARD=armsom-forge1 \
-          BRANCH=vendor \
-          ENABLE_EXTENSIONS="pull-request"
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
+          
+          echo "=== 注入 lb2004 DTS ==="
+          curl -fsSL https://raw.githubusercontent.com/kemp233/amlogic-s9xxx-armbian/main/compile-kernel/tools/patch/linux-6.1.y-rockchip-main/rk3566-lb2004.dts \
+            -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts
+          grep -q 'rk3566-lb2004' arch/arm64/boot/dts/rockchip/Makefile || \
+            sed -i '/rk3566-pinenote.dtb/a dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-lb2004.dtb' arch/arm64/boot/dts/rockchip/Makefile
+          
+          echo "=== 编译 dtb ==="
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs 2>&1 | tail -15
+          
+          echo "=== 产物 ==="
+          ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null && echo "✅ 成功" || echo "❌ 失败"
 
-      - name: Upload artifact
+      - name: Upload dtb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-rockchip-vendor
-          path: output/debs/*.deb
-          retention-days: 5
+          name: rk3566-lb2004-dtb
+          path: arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
+          retention-days: 30
