@@ -35,16 +35,17 @@ jobs:
           CONFIG_CPU_ISOLATION=y
           EOF
           yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
-          
+
           echo "=== 注入 lb2004 DTS ==="
           curl -fsSL https://raw.githubusercontent.com/kemp233/amlogic-s9xxx-armbian/main/compile-kernel/tools/patch/linux-6.1.y-rockchip-main/rk3566-lb2004.dts \
             -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts
           grep -q 'rk3566-lb2004' arch/arm64/boot/dts/rockchip/Makefile || \
             sed -i '/rk3566-pinenote.dtb/a dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-lb2004.dtb' arch/arm64/boot/dts/rockchip/Makefile
-          
-          echo "=== 编译 dtb (跳过 duplicate_label 错误) ==="
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs DTC_FLAGS="-Wno-duplicate_label" 2>&1 | tail -15
-          
+
+          echo "=== 编译单个 dtb (避开 freescale 等其他平台错误) ==="
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>&1 | tail -15
+
           echo "=== 产物 ==="
           ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null && echo "✅ 成功" || echo "❌ 失败"
 
