@@ -2,6 +2,8 @@ name: Build rk3566-lb2004 kernel
 
 on:
   workflow_dispatch:
+  push:
+    branches: [rk-6.1-rkr6.1]
   pull_request:
     types: [opened, synchronize]
 
@@ -84,3 +86,19 @@ jobs:
           name: rk3566-modules
           path: /tmp/rk3566-modules.tar.gz
           retention-days: 30
+
+      - name: Release
+        if: github.event_name != 'pull_request'
+        run: |
+          TAG="rk3566-bsp-$(date +%Y%m%d-%H%M)"
+          echo "Creating release: ${TAG}"
+          gh release create "${TAG}" \
+            --repo kemp233/linux-rockchip \
+            --title "rk3566 BSP kernel ${TAG}" \
+            --notes "rk3566-lb2004.dtb + Image + modules\n\nCommit: ${{ github.sha }}" \
+            arch/arm64/boot/Image \
+            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
+            /tmp/rk3566-modules.tar.gz
+          echo "Release created: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
