@@ -90,15 +90,17 @@ jobs:
       - name: Release
         if: github.event_name != 'pull_request'
         run: |
-          TAG="rk3566-bsp-$(date +%Y%m%d-%H%M)"
-          echo "Creating release: ${TAG}"
+          KVER=$(make -s ARCH=arm64 kernelrelease 2>/dev/null || \
+            awk '/^VERSION/{v=$3} /^PATCHLEVEL/{p=$3} /^SUBLEVEL/{s=$3} END{print v"."p"."s}' Makefile)
+          TAG="rk3566-bsp-${KVER}"
+          echo "Kernel version: ${KVER} -> tag: ${TAG}"
           gh release create "${TAG}" \
             --repo kemp233/linux-rockchip \
-            --title "rk3566 BSP kernel ${TAG}" \
-            --notes "rk3566-lb2004.dtb + Image + modules\n\nCommit: ${{ github.sha }}" \
+            --title "rk3566 BSP kernel ${KVER}" \
+            --notes "rk3566-lb2004.dtb + Image + modules | Linux ${KVER}\n\nCommit: ${{ github.sha }}" \
             arch/arm64/boot/Image \
             arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
             /tmp/rk3566-modules.tar.gz
           echo "Release created: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: *** secrets.GITHUB_TOKEN }}
