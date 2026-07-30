@@ -1,4 +1,4 @@
-name: Build rk3566-lb2004 dtb
+name: Build rk3566-lb2004 kernel
 
 on:
   workflow_dispatch:
@@ -23,40 +23,54 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc
 
-      - name: Compile rk3566-lb2004 dtb
+      - name: Compile kernel + dtbs + modules
         run: |
-          echo "=== 配置 .config ==="
-          cp arch/arm64/configs/rockchip_defconfig .config 2>/dev/null || make ARCH=arm64 defconfig
+          echo "=== Configure .config (rockchip BSP defconfig) ==="
+          cp arch/arm64/configs/rockchip_linux_defconfig .config 2>/dev/null || \
+          cp arch/arm64/configs/rockchip_defconfig .config 2>/dev/null || \
+          make ARCH=arm64 defconfig
           sed -i 's/CONFIG_WERROR=y/CONFIG_WERROR=n/' .config
-          cat >> .config << EOF
+          cat >> .config << KEOF
           CONFIG_DTC_SYMBOLS=y
+          CONFIG_LOCALVERSION="-rk3566-bsp"
           CONFIG_LOCALVERSION_AUTO=n
           CONFIG_CROSS_MEMORY_ATTACH=y
-          CONFIG_CPU_ISOLATION=y
-          EOF
-          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
+          KEOF
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -5
 
-          echo "=== 注入 lb2004 DTS ==="
+          echo "=== Inject rk3566-lb2000 DTS ==="
           curl -fsSL https://raw.githubusercontent.com/kemp233/amlogic-s9xxx-armbian/main/compile-kernel/tools/patch/linux-6.1.y-rockchip-main/rk3566-lb2004.dts \
             -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts
           grep -q 'rk3566-lb2004' arch/arm64/boot/dts/rockchip/Makefile || \
             sed -i '/rk3566-pinenote.dtb/a dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-lb2004.dtb' arch/arm64/boot/dts/rockchip/Makefile
 
-          echo "=== 直接 DTC 编译 (绕过 Makefile 路径规则) ==="
-          # 预处理 DTS → 编译 DTB
-          cpp -P -x assembler-with-cpp -undef -D__DTS__ -I include \
-            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts \
-            arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp
-          dtc -I dts -O dtb -f -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
-            arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp 2>&1
-          rm -f arch/arm64/boot/dts/rockchip/.rk3566-lb2004.dts.pre.tmp
+          echo "=== Build Image (all cores) ==="
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image 2>&1 | tail -5
+          ls -lh arch/arm64/boot/Image && echo "OK: Image built"
 
-          echo "=== 产物 ==="
-          ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null && echo "✅ 成功" || echo "❌ 失败"
+          echo "=== Build dtbs ==="
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs 2>&1 | tail -5
+          echo "--- lb2004 dtb ---"
+          ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null || {
+            echo "Warning: lb2004 dtb failed via make, fallback to dtc"
+            cpp -P -x assembler-with-cpp -undef -D__DTS__ -I include \
+              arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts \
+              /tmp/rk3566-lb2004.dts.pre.tmp 2>/dev/null
+            dtc -I dts -O dtb -f -o arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb \
+              /tmp/rk3566-lb2004.dts.pre.tmp 2>&1 || true
+            ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null || echo "FAIL: dtc fallback also failed"
+          }
 
-      - name: Upload dtb artifact
+          echo "=== Build kernel modules ==="
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tail -5
+          echo "Module count: $(find . -name '*.ko' | wc -l)"
+
+      - name: Upload artifacts (Image + dtb + modules)
         uses: actions/upload-artifact@v4
         with:
-          name: rk3566-lb2004-dtb
-          path: arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
+          name: rk3566-kernel-bsp
+          path: |
+            arch/arm64/boot/Image
+            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
+            *.ko
           retention-days: 30
