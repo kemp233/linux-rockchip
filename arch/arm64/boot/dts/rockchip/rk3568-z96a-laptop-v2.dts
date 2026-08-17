@@ -366,7 +366,7 @@
 			cpu-idle-states = <0x04>;
 			#cooling-cells = <0x02>;
 			dynamic-power-coefficient = <0xbb>;
-			cpu-supply = <0x05>;
+			cpu-supply = <0x75>;
 			phandle = <0x0c>;
 		};
 
@@ -1361,10 +1361,11 @@
 			reg = <0x4e>;
 			pinctrl-names = "default";
 			pinctrl-0 = <0x3f>;
-			vbus-supply = <0x40>;
+			/* vcc5v0_usb (0x112): known-good VBUS rail on V2 */
+			vbus-supply = <0x112>;
 			interrupt-parent = <0x41>;
 			interrupts = <0x1d 0x08>;
-			status = "disabled";
+			status = "okay";
 			phandle = <0x177>;
 
 			ports {
@@ -1412,24 +1413,6 @@
 			};
 		};
 
-		syr837@40 {
-			compatible = "silergy,syr827";
-			reg = <0x40>;
-			vin-supply = <0x44>;
-			regulator-compatible = "fan53555-reg";
-			regulator-name = "vdd_cpu";
-			regulator-min-microvolt = <0xadf34>;
-			regulator-max-microvolt = <0x1535b0>;
-			regulator-ramp-delay = <0x8fc>;
-			fcs,suspend-voltage-selector = <0x01>;
-			regulator-always-on;
-			regulator-initial-state = <0x03>;
-			phandle = <0x05>;
-
-			regulator-state-mem {
-				regulator-off-in-suspend;
-			};
-		};
 
 		pmic@20 {
 			compatible = "rockchip,rk809";
@@ -7140,6 +7123,8 @@
 	vcc5v0-otg-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc5v0_otg";
+		regulator-always-on;
+		regulator-boot-on;
 		regulator-min-microvolt = <0x4c4b40>;
 		regulator-max-microvolt = <0x4c4b40>;
 		enable-active-high;
@@ -7383,7 +7368,6 @@
 		usbc0_role_switch = "/i2c@fdd40000/husb311@4e/ports/port@0/endpoint@0";
 		usb_con = "/i2c@fdd40000/husb311@4e/connector";
 		usb_ss_con = "/i2c@fdd40000/husb311@4e/connector/ports/port@0/endpoint";
-		vdd_cpu = "/i2c@fdd40000/syr837@40";
 		rk809 = "/i2c@fdd40000/pmic@20";
 		pinctrl_rk8xx = "/i2c@fdd40000/pmic@20/pinctrl_rk8xx";
 		rk809_slppin_null = "/i2c@fdd40000/pmic@20/pinctrl_rk8xx/rk809_slppin_null";
