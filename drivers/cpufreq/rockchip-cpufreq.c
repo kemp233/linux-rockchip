@@ -419,6 +419,9 @@ static const struct rockchip_opp_data rk3576_cpu_opp_data = {
 	.config_regulators = cpu_opp_config_regulators,
 };
 
+static const struct rockchip_opp_data rk3568_cpu_opp_data = {
+	/* rk3568: no special soc info / read margin needed */
+};
 static const struct rockchip_opp_data rv1126_cpu_opp_data = {
 	.get_soc_info = rv1126_get_soc_info,
 };
@@ -451,6 +454,10 @@ static const struct of_device_id rockchip_cpufreq_of_match[] = {
 	{
 		.compatible = "rockchip,rk3588",
 		.data = (void *)&rk3588_cpu_opp_data,
+	},
+	{
+		.compatible = "rockchip,rk3568",
+		.data = (void *)&rk3568_cpu_opp_data,
 	},
 	{
 		.compatible = "rockchip,rv1109",

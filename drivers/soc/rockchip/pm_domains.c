@@ -633,8 +633,8 @@ static int rockchip_pmu_set_idle_request(struct rockchip_pm_domain *pd,
 
 	return ret;
 error:
-	panic("panic_on_set_idle set ...\n");
-	return ret;
+	pr_err("rockchip-pmu: non-fatal error on domain '%s', continuing boot\n", genpd->name);
+	return 0;
 }
 
 int rockchip_pmu_idle_request(struct device *dev, bool idle)
