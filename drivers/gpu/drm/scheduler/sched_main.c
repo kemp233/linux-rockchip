@@ -1280,21 +1280,13 @@ static void drm_sched_run_job_work(struct work_struct *w)
 
 static struct workqueue_struct *drm_sched_alloc_wq(const char *name)
 {
-#if (IS_ENABLED(CONFIG_LOCKDEP))
-	static struct lockdep_map map = {
-		.name = "drm_sched_lockdep_map"
-	};
-
 	/*
-	 * Avoid leaking a lockdep map on each drm sched creation and
-	 * destruction by using a single lockdep map for all drm sched
-	 * allocated submit_wq.
+	 * rk-6.1 workqueue API has no alloc_ordered_workqueue_lockdep_map().
+	 * Newer drm/sched backports call it under CONFIG_LOCKDEP and break
+	 * the build with -Werror=implicit-function-declaration. Use the
+	 * plain ordered WQ on this kernel baseline.
 	 */
-
-	return alloc_ordered_workqueue_lockdep_map(name, WQ_MEM_RECLAIM, &map);
-#else
 	return alloc_ordered_workqueue(name, WQ_MEM_RECLAIM);
-#endif
 }
 
 /**
