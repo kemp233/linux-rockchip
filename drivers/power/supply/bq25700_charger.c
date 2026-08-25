@@ -1971,7 +1971,7 @@ static int bq25700_probe(struct i2c_client *client,
 
 	charger_np = of_find_compatible_node(NULL, NULL, "ti,bq25700");
 	if (!charger_np)
-		charger_np = of_find_compatible_node(NULL, NULL, "southchip,sc8885");
+		charger_np = of_find_compatible_node(NULL, NULL, "southchip,sc8886");
 	if (charger_np) {
 		charger->regmap = devm_regmap_init_i2c(client,
 						       &bq25700_regmap_config);
@@ -2132,8 +2132,6 @@ MODULE_DEVICE_TABLE(i2c, bq25700_i2c_ids);
 #ifdef CONFIG_OF
 static const struct of_device_id bq25700_of_match[] = {
 	{ .compatible = "ti,bq25700", },
-	{ .compatible = "ti,bq25703", },
-	{ .compatible = "southchip,sc8885", },
 	{ .compatible = "southchip,sc8886", },
 	{ },
 };

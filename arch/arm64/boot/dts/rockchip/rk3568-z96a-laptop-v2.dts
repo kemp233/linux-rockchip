@@ -1388,7 +1388,7 @@
 			connector {
 				compatible = "usb-c-connector";
 				label = "USB-C";
-				power-role = "dual";
+				power-role = "sink";
 				try-power-role = "sink";
 				data-role = "dual";
 				pd-revision = <0x200>;
