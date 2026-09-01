@@ -3608,7 +3608,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0xcd 0xce 0xcf 0xd0 0xd1 0xd2>;
 		#sound-dai-cells = <0x00>;
-		status = "disabled";
+		status = "okay";
 		phandle = <0x12c>;
 	};
 
@@ -3786,8 +3786,24 @@
 		pinctrl-0 = <0xd9>;
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
-		status = "disabled";
+		status = "okay";
 		phandle = <0x1c0>;
+
+		es7202@30 {
+			compatible = "ES7202_PDM_ADC_1";
+			status = "okay";
+			reg = <0x30>;
+			#sound-dai-cells = <0x00>;
+			phandle = <0x332>;
+		};
+
+		es7202_sdi3@32 {
+			compatible = "ES7202_PDM_ADC_2";
+			status = "okay";
+			reg = <0x32>;
+			#sound-dai-cells = <0x00>;
+			phandle = <0x333>;
+		};
 	};
 
 	i2c@fe5d0000 {
@@ -7012,6 +7028,22 @@
 		compatible = "delta,dfbmcs320";
 		#sound-dai-cells = <0x00>;
 		phandle = <0x128>;
+	};
+
+	sound_es7202 {
+		status = "okay";
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "pdm";
+		simple-audio-card,name = "rockchip,es7202";
+		simple-audio-card,mclk-fs = <0x100>;
+
+		simple-audio-card,cpu {
+			sound-dai = <0x12c>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <0x332>;
+		};
 	};
 
 	bt-sound {
