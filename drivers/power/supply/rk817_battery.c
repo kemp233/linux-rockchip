@@ -624,6 +624,7 @@ struct rk817_battery_device {
 	int				plugout_irq;
 	int				chip_id;
 	int				is_register_chg_psy;
+	struct iio_channel		*bat_chan; /* battery voltage via SARADC (2S divider) */
 	bool				change; /* Battery status change, report information */
 };
 
@@ -954,14 +955,26 @@ static int rk817_bat_get_battery_voltage(struct rk817_battery_device *battery)
 	int vol, val = 0, vol_temp;
 	int vcalib0, vcalib1;
 
-	vcalib0 = rk817_bat_get_vaclib0(battery);
-	vcalib1 =  rk817_bat_get_vaclib1(battery);
+	if (battery->bat_chan) {
+		/*
+		 * 2S battery packs exceed the RK809 VBAT pin range, the
+		 * hardware senses them through a resistor divider into the
+		 * SoC SARADC (DT: io-channels, io-channel-names
+		 * "battery-chan-5"). iio_read_channel_processed() returns
+		 * the divided pin voltage in mV; the RK809_ID correction
+		 * below (bat_res_up/bat_res_down) restores the pack voltage.
+		 */
+		if (iio_read_channel_processed(battery->bat_chan, &vol))
+			vol = 0;
+	} else {
+		vcalib0 = rk817_bat_get_vaclib0(battery);
+		vcalib1 =  rk817_bat_get_vaclib1(battery);
 
+		val = rk817_bat_field_read(battery, BAT_VOL_H) << 8;
+		val |= rk817_bat_field_read(battery, BAT_VOL_L) << 0;
 
-	val = rk817_bat_field_read(battery, BAT_VOL_H) << 8;
-	val |= rk817_bat_field_read(battery, BAT_VOL_L) << 0;
-
-	vol = battery->voltage_k * val / 1000 + battery->voltage_b;
+		vol = battery->voltage_k * val / 1000 + battery->voltage_b;
+	}
 
 	if (battery->chip_id == RK809_ID) {
 		vol_temp = vol * battery->pdata->bat_res_up /
@@ -3042,6 +3055,17 @@ static int rk817_battery_probe(struct platform_device *pdev)
 		dev_err(battery->dev, "battery parse dt failed!\n");
 		return ret;
 	}
+
+	/*
+	 * Optional SARADC battery-voltage channel (2S packs sensed through a
+	 * resistor divider, DT "io-channels"/"io-channel-names"). Falls back
+	 * to the PMIC VBAT gauge when the DT does not provide it.
+	 */
+	battery->bat_chan = devm_iio_channel_get(battery->dev, NULL);
+	if (IS_ERR(battery->bat_chan))
+		battery->bat_chan = NULL;
+	else
+		dev_info(battery->dev, "battery voltage sourced from SARADC\n");
 
 	rk817_bat_init_info(battery);
 	rk817_bat_init_fg(battery);
