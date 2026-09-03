@@ -1,0 +1,124 @@
+name: Build Z96A kernel with Mali-G52 fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, build-mali-fix]
+    paths:
+      - '.github/workflows/build-kernel-mali-g52.yml'
+      - 'patches/**'
+      - 'configs/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          repository: kemp233/linux-rockchip
+          ref: 9c4c29d08bb2b0e0bcb96d223131e64c8aec8b30
+          path: src
+
+      - name: Install cross-compiler + tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            bison flex bc build-essential \
+            libssl-dev libncurses-dev \
+            python3 python3-pip \
+            device-tree-compiler \
+            u-boot-tools kmod cpio rsync
+
+      - name: Copy base config
+        run: |
+          mkdir -p out
+          # 从 src 仓库的 z96a 配置 copy
+          if [ -f src/arch/arm64/configs/rk3568_nvr.config ]; then
+            # 用 rk3568 base defconfig
+            cp src/arch/arm64/configs/rk3568_nvr.config src/.config
+          else
+            # fallback
+            cp src/arch/arm64/configs/defconfig src/.config
+          fi
+          # 强制启用关键配置
+          cat src/.config | grep -q "^CONFIG_MALI_BIFROST=y" || \
+            echo "MALI_BIFROST will be enabled via fragment"
+          
+      - name: Apply config patch (Mali-G52 fix)
+        run: |
+          cd src
+          # 确保 MALI_BIFROST=y (Z96A 板子 GPU 驱动)
+          if ! grep -q "^CONFIG_MALI_BIFROST=y" .config; then
+            sed -i 's/^# CONFIG_MALI_BIFROST is not set$/CONFIG_MALI_BIFROST=y/' .config
+            echo "CONFIG_MALI_BIFROST=y" >> .config
+          fi
+          # 禁用 mainline PANFROST (避免冲突)
+          sed -i 's/^CONFIG_DRM_PANFROST=y$/# CONFIG_DRM_PANFROST is not set/' .config
+          # 禁用 MIDGARD/400/450 (G52 不用)
+          sed -i -E 's/^CONFIG_MALI(400|450|MIDGARD)=y/# CONFIG_MALI\1 is not set/' .config
+          sed -i -E 's/^CONFIG_MALI_MIDGARD_[A-Z_]+=y/# & is not set/' .config
+          # 确保 platform name
+          sed -i 's/^CONFIG_MALI_PLATFORM_NAME=.*/CONFIG_MALI_PLATFORM_NAME="rk"/' .config
+          grep -q "^CONFIG_MALI_PLATFORM_NAME=" .config || \
+            echo 'CONFIG_MALI_PLATFORM_NAME="rk"' >> .config
+          # MALI_BIFROST_CSF_INCLUDE_FW
+          grep -q "^CONFIG_MALI_CSF_INCLUDE_FW=" .config || \
+            echo "CONFIG_MALI_CSF_INCLUDE_FW=y" >> .config
+          # Show
+          echo "==== Final config ===="
+          grep -E "^CONFIG_MALI|^CONFIG_DRM_PANFROST" .config | head -30
+
+      - name: Run olddefconfig
+        working-directory: src
+        run: |
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+      - name: Build kernel Image + dtbs + modules
+        working-directory: src
+        run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          # Get core count from runner
+          JOBS=$(nproc)
+          echo "Building with -j$JOBS"
+          make -j${JOBS} Image dtbs modules 2>&1 | tail -50
+
+      - name: Install modules to staging dir
+        working-directory: src
+        run: |
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export INSTALL_MOD_PATH=$(pwd)/../modules-out
+          make modules_install
+          # Tar modules
+          cd ../modules-out
+          tar czf ../modules.tar.gz .
+
+      - name: Collect build outputs
+        working-directory: src
+        run: |
+          cd ..
+          mkdir -p out
+          cp src/arch/arm64/boot/Image out/Image
+          cp src/arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb \
+             out/rk3568-z96a-laptop-v2.dtb
+          cp modules.tar.gz out/modules.tar.gz
+          # Show sizes
+          ls -la out/
+          # md5
+          md5sum out/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: z96a-kernel-mali-g52-fix
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
