@@ -42,10 +42,12 @@ jobs:
 
       - name: Build Image + dtbs + modules
         run: |
-          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs 2>&1 | tail -4
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs 2>&1 | tee /tmp/b1.log | tail -4
+          { grep -iE "error|cannot find|No such file" /tmp/b1.log | head -20; } || true
           ls -lh arch/arm64/boot/Image
           ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb
-          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tail -4
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tee /tmp/b2.log | tail -4
+          { grep -iE "error:" /tmp/b2.log | head -20; } || true
           ls -lh drivers/staging/media/rkvdec/rockchip-vdec.ko
           echo "Module count: $(find . -name '*.ko' | wc -l)"
           tar czf /tmp/z96a-modules.tar.gz $(find . -name '*.ko' -printf '%P ') 2>/dev/null
