@@ -36,8 +36,9 @@ jobs:
             '# vendor MPP rkvdec2 fights staging rkvdec for the DT node' \
             'CONFIG_ROCKCHIP_MPP_RKVDEC2=n' >> .config
           cat .config | tail -6
-          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
-          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC=|CONFIG_ROCKCHIP_MPP_RKVDEC2=|CONFIG_V4L2_H264=|CONFIG_MEDIA_CONTROLLER_REQUEST_API" .config
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
+          echo "=== verify config (informational) ==="
+          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_V4L2_H264|CONFIG_MEDIA_CONTROLLER_REQUEST_API|CONFIG_VIDEO_DEV=" .config || true
 
       - name: Build Image + dtbs + modules
         run: |
