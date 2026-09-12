@@ -32,13 +32,19 @@ jobs:
             'CONFIG_LOCALVERSION="-legacy-rockchip-rk3568-z96a"' \
             'CONFIG_LOCALVERSION_AUTO=n' \
             '# staging rkvdec (V4L2 stateless) - H264/VP9 for VA-API' \
+            'CONFIG_STAGING_MEDIA=y' \
             'CONFIG_VIDEO_ROCKCHIP_VDEC=m' \
             '# vendor MPP rkvdec2 fights staging rkvdec for the DT node' \
             'CONFIG_ROCKCHIP_MPP_RKVDEC2=n' >> .config
           cat .config | tail -6
           yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
-          echo "=== verify config (informational) ==="
-          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_V4L2_H264|CONFIG_MEDIA_CONTROLLER_REQUEST_API|CONFIG_VIDEO_DEV=" .config || true
+          echo "=== verify config (hard gate: rkvdec module must be enabled) ==="
+          grep -qE "^CONFIG_VIDEO_ROCKCHIP_VDEC=m$" .config || {
+            echo "FAIL: CONFIG_VIDEO_ROCKCHIP_VDEC is not =m after olddefconfig"
+            grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_STAGING_MEDIA|CONFIG_VIDEO_DEV=|CONFIG_V4L2_MEM2MEM" .config
+            exit 1
+          }
+          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_V4L2_H264|CONFIG_MEDIA_CONTROLLER_REQUEST_API|CONFIG_STAGING_MEDIA" .config || true
 
       - name: Build Image
         run: |
