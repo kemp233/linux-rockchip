@@ -45,7 +45,16 @@ jobs:
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs 2>&1 | tee /tmp/b1.log | tail -4
           { grep -iE "error|cannot find|No such file" /tmp/b1.log | head -20; } || true
           ls -lh arch/arm64/boot/Image
-          ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb
+          echo "--- z96a dtb (make may fail: decompiled DTS has property-after-subnode) ---"
+          ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb 2>/dev/null || {
+            echo "Warning: dtb failed via make, fallback to dtc -f"
+            cpp -P -x assembler-with-cpp -undef -D__DTS__ -I include \
+              arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dts \
+              /tmp/z96a.pre.tmp 2>/dev/null
+            dtc -I dts -O dtb -f -o arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb \
+              /tmp/z96a.pre.tmp 2>&1 | tail -5 || true
+            ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb || echo "FAIL: dtc fallback also failed"
+          }
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tee /tmp/b2.log | tail -4
           { grep -iE "error:" /tmp/b2.log | head -20; } || true
           ls -lh drivers/staging/media/rkvdec/rockchip-vdec.ko
