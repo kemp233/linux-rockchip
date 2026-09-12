@@ -40,12 +40,16 @@ jobs:
           echo "=== verify config (informational) ==="
           grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_V4L2_H264|CONFIG_MEDIA_CONTROLLER_REQUEST_API|CONFIG_VIDEO_DEV=" .config || true
 
-      - name: Build Image + dtbs + modules
+      - name: Build Image
         run: |
-          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs 2>&1 | tee /tmp/b1.log | tail -4
-          { grep -iE "error|cannot find|No such file" /tmp/b1.log | head -20; } || true
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image 2>&1 | tee /tmp/b1.log | tail -4
+          { grep -iE "error:|cannot find|No such file" /tmp/b1.log | head -20; } || true
           ls -lh arch/arm64/boot/Image
-          echo "--- z96a dtb (make may fail: decompiled DTS has property-after-subnode) ---"
+
+      - name: Build dtbs (with dtc -f fallback)
+        run: |
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs 2>&1 | tee /tmp/b1.log | tail -4 || true
+          echo "--- z96a dtb (decompiled DTS has property-after-subnode; dtc -f if make failed) ---"
           ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb 2>/dev/null || {
             echo "Warning: dtb failed via make, fallback to dtc -f"
             cpp -P -x assembler-with-cpp -undef -D__DTS__ -I include \
@@ -55,6 +59,9 @@ jobs:
               /tmp/z96a.pre.tmp 2>&1 | tail -5 || true
             ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb || echo "FAIL: dtc fallback also failed"
           }
+
+      - name: Build modules
+        run: |
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tee /tmp/b2.log | tail -4
           { grep -iE "error:" /tmp/b2.log | head -20; } || true
           ls -lh drivers/staging/media/rkvdec/rockchip-vdec.ko
