@@ -13,6 +13,7 @@
 #include <linux/interrupt.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/pm.h>
 #include <linux/pm_runtime.h>
@@ -987,21 +988,46 @@ static void rkvdec_watchdog_func(struct work_struct *work)
 	}
 }
 
-static const struct of_device_id of_rkvdec_match[] = {
-	{ .compatible = "rockchip,rk3399-vdec" },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, of_rkvdec_match);
-
 static const char * const rkvdec_clk_names[] = {
 	"axi", "ahb", "cabac", "core"
 };
 
+/* RK356x (rkvdec2-ish IP wired to the vendor BSP clock names): the DT
+ * provides aclk_vcodec/hclk_vcodec/clk_cabac/clk_core (+ an extra
+ * clk_hevc_cabac which H.264/VP9 do not need, so it is left off).
+ */
+static const char * const rkvdec_rk3568_clk_names[] = {
+	"aclk_vcodec", "hclk_vcodec", "clk_cabac", "clk_core"
+};
+
+static const struct rkvdec_variant {
+	const char *const *clk_names;
+	unsigned int num_clks;
+} rkvdec_rk3399_variant = {
+	.clk_names = rkvdec_clk_names,
+	.num_clks = ARRAY_SIZE(rkvdec_clk_names),
+}, rkvdec_rk3568_variant = {
+	.clk_names = rkvdec_rk3568_clk_names,
+	.num_clks = ARRAY_SIZE(rkvdec_rk3568_clk_names),
+};
+
+static const struct of_device_id of_rkvdec_match[] = {
+	{ .compatible = "rockchip,rk3399-vdec", .data = &rkvdec_rk3399_variant },
+	{ .compatible = "rockchip,rkv-decoder-rk3568", .data = &rkvdec_rk3568_variant },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, of_rkvdec_match);
+
 static int rkvdec_probe(struct platform_device *pdev)
 {
 	struct rkvdec_dev *rkvdec;
+	const struct rkvdec_variant *variant;
 	unsigned int i;
 	int ret, irq;
+
+	variant = of_device_get_match_data(&pdev->dev);
+	if (!variant)
+		return -ENODEV;
 
 	rkvdec = devm_kzalloc(&pdev->dev, sizeof(*rkvdec), GFP_KERNEL);
 	if (!rkvdec)
@@ -1012,15 +1038,15 @@ static int rkvdec_probe(struct platform_device *pdev)
 	mutex_init(&rkvdec->vdev_lock);
 	INIT_DELAYED_WORK(&rkvdec->watchdog_work, rkvdec_watchdog_func);
 
-	rkvdec->clocks = devm_kcalloc(&pdev->dev, ARRAY_SIZE(rkvdec_clk_names),
+	rkvdec->clocks = devm_kcalloc(&pdev->dev, variant->num_clks,
 				      sizeof(*rkvdec->clocks), GFP_KERNEL);
 	if (!rkvdec->clocks)
 		return -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(rkvdec_clk_names); i++)
-		rkvdec->clocks[i].id = rkvdec_clk_names[i];
+	for (i = 0; i < variant->num_clks; i++)
+		rkvdec->clocks[i].id = variant->clk_names[i];
 
-	ret = devm_clk_bulk_get(&pdev->dev, ARRAY_SIZE(rkvdec_clk_names),
+	ret = devm_clk_bulk_get(&pdev->dev, variant->num_clks,
 				rkvdec->clocks);
 	if (ret)
 		return ret;
@@ -1081,16 +1107,20 @@ static int rkvdec_remove(struct platform_device *pdev)
 static int rkvdec_runtime_resume(struct device *dev)
 {
 	struct rkvdec_dev *rkvdec = dev_get_drvdata(dev);
+	const struct rkvdec_variant *variant =
+		of_device_get_match_data(rkvdec->dev);
 
-	return clk_bulk_prepare_enable(ARRAY_SIZE(rkvdec_clk_names),
+	return clk_bulk_prepare_enable(variant->num_clks,
 				       rkvdec->clocks);
 }
 
 static int rkvdec_runtime_suspend(struct device *dev)
 {
 	struct rkvdec_dev *rkvdec = dev_get_drvdata(dev);
+	const struct rkvdec_variant *variant =
+		of_device_get_match_data(rkvdec->dev);
 
-	clk_bulk_disable_unprepare(ARRAY_SIZE(rkvdec_clk_names),
+	clk_bulk_disable_unprepare(variant->num_clks,
 				   rkvdec->clocks);
 	return 0;
 }

@@ -123,3 +123,4 @@ obj-$(CONFIG_CHARGER_SURFACE)	+= surface_charger.o
 obj-$(CONFIG_BATTERY_UG3105)	+= ug3105_battery.o
 
 obj-$(CONFIG_NANOPI_ADC_POWER)	+= nanopi_adc_power.o
+obj-$(CONFIG_CHARGER_SC8886S) += sc8886s_charger.o

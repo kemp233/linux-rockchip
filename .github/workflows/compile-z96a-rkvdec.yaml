@@ -1,0 +1,87 @@
+name: Build Z96A rk3568 kernel with staging rkvdec
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [rk-6.1-rkr5.1]
+    paths:
+      - 'drivers/staging/media/rkvdec/**'
+      - '.github/workflows/compile-z96a-rkvdec.yaml'
+
+jobs:
+  Build:
+    name: Compile Z96A kernel + rkvdec module
+    runs-on: ubuntu-24.04-arm
+    if: ${{ github.repository_owner == 'kemp233' }}
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc
+
+      - name: Configure .config (rockchip BSP + rkvdec fragment)
+        run: |
+          cp arch/arm64/configs/rockchip_linux_defconfig .config
+          sed -i 's/CONFIG_WERROR=y/CONFIG_WERROR=n/' .config
+          printf '%s\n' \
+            'CONFIG_LOCALVERSION="-legacy-rockchip-rk3568-z96a"' \
+            'CONFIG_LOCALVERSION_AUTO=n' \
+            '# staging rkvdec (V4L2 stateless) - H264/VP9 for VA-API' \
+            'CONFIG_VIDEO_ROCKCHIP_VDEC=m' \
+            '# vendor MPP rkvdec2 fights staging rkvdec for the DT node' \
+            'CONFIG_ROCKCHIP_MPP_RKVDEC2=n' >> .config
+          cat .config | tail -6
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
+          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC=|CONFIG_ROCKCHIP_MPP_RKVDEC2=|CONFIG_V4L2_H264=|CONFIG_MEDIA_CONTROLLER_REQUEST_API" .config
+
+      - name: Build Image + dtbs + modules
+        run: |
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image dtbs 2>&1 | tail -4
+          ls -lh arch/arm64/boot/Image
+          ls -lh arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules 2>&1 | tail -4
+          ls -lh drivers/staging/media/rkvdec/rockchip-vdec.ko
+          echo "Module count: $(find . -name '*.ko' | wc -l)"
+          tar czf /tmp/z96a-modules.tar.gz $(find . -name '*.ko' -printf '%P ') 2>/dev/null
+          ls -lh /tmp/z96a-modules.tar.gz
+
+      - name: Upload artifacts (Image + dtb + rkvdec.ko)
+        uses: actions/upload-artifact@v6
+        with:
+          name: z96a-kernel-rkvdec
+          path: |
+            arch/arm64/boot/Image
+            arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb
+            drivers/staging/media/rkvdec/rockchip-vdec.ko
+          retention-days: 30
+
+      - name: Upload all modules
+        uses: actions/upload-artifact@v6
+        with:
+          name: z96a-modules
+          path: /tmp/z96a-modules.tar.gz
+          retention-days: 30
+
+      - name: Release
+        if: github.event_name != 'pull_request'
+        run: |
+          KVER=$(make -s ARCH=arm64 kernelrelease 2>/dev/null || \
+            awk '/^VERSION/{v=$3} /^PATCHLEVEL/{p=$3} /^SUBLEVEL/{s=$3} END{print v"."p"."s}' Makefile)
+          TAG="z96a-rkvdec-${KVER}"
+          echo "Kernel version: ${KVER} -> tag: ${TAG}"
+          gh release create "${TAG}" \
+            --repo kemp233/linux-rockchip \
+            --title "Z96A kernel ${KVER} + staging rkvdec" \
+            --notes "staging rkvdec (V4L2 stateless H.264/VP9) for VA-API | Linux ${KVER} | Commit: ${{ github.sha }}" \
+            arch/arm64/boot/Image \
+            arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb \
+            drivers/staging/media/rkvdec/rockchip-vdec.ko \
+            /tmp/z96a-modules.tar.gz
+          echo "Release: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

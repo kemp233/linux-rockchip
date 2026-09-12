@@ -752,6 +752,13 @@ config CHARGER_BQ25700
 	help
 	  Say Y to enable support for the TI BQ25700 battery charger.
 
+config CHARGER_SC8886S
+	tristate "SouthChip SC8886S battery charger driver (Z96A)"
+	depends on REGMAP_I2C
+	help
+	  Say Y to enable support for the SouthChip SC8886S battery
+	  charger IC, used in Z96A RK3568 laptop boards.
+
 config CHARGER_BQ25890
 	tristate "TI BQ25890 battery charger driver"
 	depends on I2C
