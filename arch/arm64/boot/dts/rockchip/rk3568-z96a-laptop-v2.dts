@@ -585,13 +585,6 @@
 
 			route-edp {
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 				status = "okay";
 				logo,uboot = "logo.bmp";
 				logo,kernel = "logo_kernel.bmp";
@@ -599,17 +592,17 @@
 				charge_logo,mode = "center";
 				connect = <0x19>;
 				phandle = <0x144>;
-			};
 
-			route-hdmi {
-                        
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
+                        };			};
+
+			route-hdmi {
+                        
 				status = "okay";
 				logo,uboot = "logo.bmp";
 				logo,kernel = "logo_kernel.bmp";
@@ -617,7 +610,14 @@
 				charge_logo,mode = "center";
 				connect = <0x1a>;
 				phandle = <0x145>;
-			};
+
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };			};
 
 			route-lvds {
 				status = "disabled";
@@ -686,16 +686,16 @@
 		rockchip,taskqueue-count = <0x06>;
 		rockchip,resetgroup-count = <0x06>;
                         
+		status = "okay";
+		phandle = <0x7a>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x7a>;
-	};
+                        };	};
 
 	psci {
 		compatible = "arm,psci-1.0";
@@ -735,19 +735,19 @@
 	rockchip-suspend {
 		compatible = "rockchip,pm-rk3568";
                         
+		status = "okay";
+		rockchip,sleep-debug-en = <0x01>;
+		rockchip,sleep-mode-config = <0x4e4>;
+		rockchip,wakeup-config = <0x2001>;
+		phandle = <0x14e>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		rockchip,sleep-debug-en = <0x01>;
-		rockchip,sleep-mode-config = <0x4e4>;
-		rockchip,wakeup-config = <0x2001>;
-		phandle = <0x14e>;
-	};
+                        };	};
 
 	rockchip-system-monitor {
 		compatible = "rockchip,system-monitor";
@@ -968,6 +968,9 @@
 		#size-cells = <0x02>;
 		ranges;
                         
+		status = "okay";
+		phandle = <0x163>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -975,9 +978,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		phandle = <0x163>;
-
 		dwc3@fcc00000 {
 			compatible = "snps,dwc3";
 			reg = <0x00 0xfcc00000 0x00 0x400000>;
@@ -1001,6 +1001,9 @@
 			snps,parkmode-disable-ss-quirk;
 			quirk-skip-phy-init;
                         
+			status = "okay";
+			phandle = <0x164>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -1008,9 +1011,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-			status = "okay";
-			phandle = <0x164>;
-
 			port {
 				#address-cells = <0x01>;
 				#size-cells = <0x00>;
@@ -1043,6 +1043,9 @@
 		#size-cells = <0x02>;
 		ranges;
                         
+		status = "okay";
+		phandle = <0x165>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -1050,9 +1053,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		phandle = <0x165>;
-
 		dwc3@fd000000 {
 			compatible = "snps,dwc3";
 			reg = <0x00 0xfd000000 0x00 0x400000>;
@@ -1073,16 +1073,16 @@
 			snps,parkmode-disable-hs-quirk;
 			snps,parkmode-disable-ss-quirk;
                         
+			status = "okay";
+			phandle = <0x166>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phandle = <0x166>;
-		};
+                        };		};
 	};
 
 	interrupt-controller@fd400000 {
@@ -1114,16 +1114,16 @@
 		phys = <0x2d>;
 		phy-names = "usb2-phy";
                         
+		status = "okay";
+		phandle = <0x167>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x167>;
-	};
+                        };	};
 
 	usb@fd840000 {
 		compatible = "generic-ohci";
@@ -1134,16 +1134,16 @@
 		phys = <0x2d>;
 		phy-names = "usb2-phy";
                         
+		status = "okay";
+		phandle = <0x168>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x168>;
-	};
+                        };	};
 
 	usb@fd880000 {
 		compatible = "generic-ehci";
@@ -1154,16 +1154,16 @@
 		phys = <0x2e>;
 		phy-names = "usb2-phy";
                         
+		status = "okay";
+		phandle = <0x169>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x169>;
-	};
+                        };	};
 
 	usb@fd8c0000 {
 		compatible = "generic-ohci";
@@ -1174,31 +1174,31 @@
 		phys = <0x2e>;
 		phy-names = "usb2-phy";
                         
+		status = "okay";
+		phandle = <0x16a>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x16a>;
-	};
+                        };	};
 
 	syscon@fda00000 {
 		compatible = "rockchip,rk3568-xpcs\0syscon";
 		reg = <0x00 0xfda00000 0x00 0x200000>;
                         
+		status = "okay";
+		phandle = <0x16b>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x16b>;
-	};
+                        };	};
 
 	syscon@fdc20000 {
 		compatible = "rockchip,rk3568-pmugrf\0syscon\0simple-mfd";
@@ -1208,13 +1208,6 @@
 		io-domains {
 			compatible = "rockchip,rk3568-pmu-io-voltage-domain";
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 			status = "okay";
 			pmuio1-supply = <0x2f>;
 			pmuio2-supply = <0x30>;
@@ -1225,7 +1218,14 @@
 			vccio6-supply = <0x34>;
 			vccio7-supply = <0x33>;
 			phandle = <0x16c>;
-		};
+
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };		};
 
 		reboot-mode {
 			compatible = "syscon-reboot-mode";
@@ -1393,16 +1393,16 @@
 			clock-names = "refclk";
 			#phy-cells = <0x00>;
                         
+			status = "okay";
+			phandle = <0xa3>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phandle = <0xa3>;
-		};
+                        };		};
 	};
 
 	syscon@fdcb8000 {
@@ -1460,6 +1460,9 @@
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x174>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -1467,27 +1470,24 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		phandle = <0x174>;
-
 		cn3705@1c {
 			compatible = "cellwise,cn3705";
 			reg = <0x1c>;
                         
+			status = "okay";
+			phandle = <0x175>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phandle = <0x175>;
-		};
+                        };		};
 
 		sc8886@6b {
-                        extcon = <&usb_con>, <&usb_con>;
-                        ti,usb-charger = <&husb311_chg>;
+                        extcon = <0x2a>, <0x2a>;
+                        ti,usb-charger = <0x177>;
 			compatible = "ti,bq25700\0southchip,sc8886";
 			reg = <0x6b>;
 			interrupt-parent = <0x41>;
@@ -1512,16 +1512,16 @@
 			low_temp_off = <0x00>;
 			high_temp_off = <0x2b>;
                         
+			status = "okay";
+			phandle = <0x176>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phandle = <0x176>;
-		};
+                        };		};
 
 		husb311@4e {
 			compatible = "hynetek,husb311";
@@ -1533,6 +1533,9 @@
 			interrupt-parent = <0x41>;
 			interrupts = <0x1d 0x08>;
                         
+			status = "okay";
+			phandle = <0x177>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -1540,9 +1543,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-			status = "okay";
-			phandle = <0x177>;
-
 			ports {
 				#address-cells = <0x01>;
 				#size-cells = <0x00>;
@@ -1621,15 +1621,15 @@
 
 			pwrkey {
                         
+				status = "okay";
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-				status = "okay";
-			};
+                        };			};
 
 			pinctrl_rk8xx {
 				gpio-controller;
@@ -1884,16 +1884,16 @@
 				spk-ctl-gpios = <0x4c 0x06 0x00>;
 				spk-use-hp-channel;
                         
+				status = "okay";
+				phandle = <0x12e>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-				status = "okay";
-				phandle = <0x12e>;
-			};
+                        };			};
 
 			/*
 			 * 2S battery (8.4V max) sensed through a resistor
@@ -1924,15 +1924,15 @@
 				enough-led-ctl-gpios = <0x41 0x1e 0x00>;
 				charging-led-ctl-gpios = <0x41 0x1d 0x00>;
                         
+				status = "okay";
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-				status = "okay";
-			};
+                        };			};
 		};
 	};
 
@@ -2011,6 +2011,9 @@
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
                         
+			status = "okay";
+			phandle = <0x25>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -2018,9 +2021,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-			status = "okay";
-			phandle = <0x25>;
-
 
 			pd_gpu@7 {
 				reg = <0x07>;
@@ -2106,6 +2106,10 @@
 		#cooling-cells = <0x02>;
 		operating-points-v2 = <0x76>;
                         
+		status = "okay";
+		mali-supply = <0x71>;
+		phandle = <0x21>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -2113,10 +2117,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		mali-supply = <0x71>;
-		phandle = <0x21>;
-
 		power-model {
 			compatible = "simple-power-model";
 			leakage-range = <0x05 0x0f>;
@@ -2230,16 +2230,16 @@
 		rockchip,taskqueue-node = <0x00>;
 		rockchip,resetgroup-node = <0x00>;
                         
+		status = "okay";
+		phandle = <0x18a>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x18a>;
-	};
+                        };	};
 
 	iommu@fdea0800 {
 		compatible = "rockchip,iommu-v2";
@@ -2251,16 +2251,16 @@
 		power-domains = <0x25 0x0b>;
 		#iommu-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x79>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x79>;
-	};
+                        };	};
 
 	rk_rga@fdeb0000 {
 		compatible = "rockchip,rga2";
@@ -2270,16 +2270,16 @@
 		clock-names = "aclk_rga\0hclk_rga\0clk_rga";
 		power-domains = <0x25 0x0a>;
                         
+		status = "okay";
+		phandle = <0x18b>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x18b>;
-	};
+                        };	};
 
 	ebc@fdec0000 {
 		compatible = "rockchip,rk3568-ebc-tcon";
@@ -2310,16 +2310,16 @@
 		rockchip,resetgroup-node = <0x01>;
 		power-domains = <0x25 0x0a>;
                         
+		status = "okay";
+		phandle = <0x18d>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x18d>;
-	};
+                        };	};
 
 	iommu@fded0480 {
 		compatible = "rockchip,iommu-v2";
@@ -2331,16 +2331,16 @@
 		power-domains = <0x25 0x0a>;
 		#iommu-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x7c>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x7c>;
-	};
+                        };	};
 
 	vepu@fdee0000 {
 		compatible = "rockchip,vpu-encoder-v2";
@@ -2357,16 +2357,16 @@
 		rockchip,resetgroup-node = <0x02>;
 		power-domains = <0x25 0x0a>;
                         
+		status = "okay";
+		phandle = <0x18e>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x18e>;
-	};
+                        };	};
 
 	iommu@fdee0800 {
 		compatible = "rockchip,iommu-v2";
@@ -2378,16 +2378,16 @@
 		power-domains = <0x25 0x0a>;
 		#iommu-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x7d>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x7d>;
-	};
+                        };	};
 
 	iep@fdef0000 {
 		compatible = "rockchip,iep-v2";
@@ -2403,16 +2403,16 @@
 		rockchip,resetgroup-node = <0x05>;
 		iommus = <0x7e>;
                         
+		status = "okay";
+		phandle = <0x18f>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x18f>;
-	};
+                        };	};
 
 	iommu@fdef0800 {
 		compatible = "rockchip,iommu-v2";
@@ -2424,16 +2424,16 @@
 		#iommu-cells = <0x00>;
 		power-domains = <0x25 0x0a>;
                         
+		status = "okay";
+		phandle = <0x7e>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x7e>;
-	};
+                        };	};
 
 	eink@fdf00000 {
 		compatible = "rockchip,rk3568-eink-tcon";
@@ -2465,17 +2465,17 @@
 		power-domains = <0x25 0x0e>;
 		operating-points-v2 = <0x80>;
                         
+		status = "okay";
+		venc-supply = <0x75>;
+		phandle = <0x191>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		venc-supply = <0x75>;
-		phandle = <0x191>;
-	};
+                        };	};
 
 	rkvenc-opp-table {
 		compatible = "operating-points-v2";
@@ -2514,16 +2514,16 @@
 		#iommu-cells = <0x00>;
 		power-domains = <0x25 0x0e>;
                         
+		status = "okay";
+		phandle = <0x7f>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x7f>;
-	};
+                        };	};
 
 	rkvdec@fdf80200 {
 		compatible = "rockchip,rkv-decoder-rk3568\0rockchip,rkv-decoder-v2";
@@ -2552,16 +2552,16 @@
 		rockchip,rcb-min-width = <0x200>;
 		rockchip,task-capacity = <0x10>;
                         
+		status = "okay";
+		phandle = <0x192>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x192>;
-	};
+                        };	};
 
 	rkvdec-opp-table {
 		compatible = "operating-points-v2";
@@ -2595,16 +2595,16 @@
 		power-domains = <0x25 0x0d>;
 		#iommu-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x82>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x82>;
-	};
+                        };	};
 
 	mipi-csi2-hw@fdfb0000 {
 		compatible = "rockchip,rk3568-mipi-csi2-hw";
@@ -2617,16 +2617,16 @@
 		resets = <0x23 0xff>;
 		reset-names = "srst_csihost_p";
                         
+		status = "okay";
+		phandle = <0x1e>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1e>;
-	};
+                        };	};
 
 	rkcif@fdfe0000 {
 		compatible = "rockchip,rk3568-cif";
@@ -2703,16 +2703,16 @@
 		iommus = <0x89>;
 		rockchip,iq-feature = <0x1bfb 0xfffe67ff>;
                         
+		status = "okay";
+		phandle = <0x8a>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x8a>;
-	};
+                        };	};
 
 	iommu@fdff1a00 {
 		compatible = "rockchip,iommu-v2";
@@ -2725,16 +2725,16 @@
 		#iommu-cells = <0x00>;
 		rockchip,disable-mmu-reset;
                         
+		status = "okay";
+		phandle = <0x89>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x89>;
-	};
+                        };	};
 
 	rkisp-vir0 {
 		compatible = "rockchip,rkisp-vir";
@@ -2818,6 +2818,13 @@
 		iommus = <0x8f>;
 		power-domains = <0x25 0x09>;
                         
+		status = "okay";
+		disable-win-move;
+
+		assigned-clocks = <0x23 0xdf 0x23 0xe0>;
+		assigned-clock-parents = <0x3b 0x02 0x23 0x05>;
+		phandle = <0x199>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -2825,11 +2832,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		disable-win-move;
-		assigned-clocks = <0x23 0xdf 0x23 0xe0>;
-		assigned-clock-parents = <0x3b 0x02 0x23 0x05>;
-		phandle = <0x199>;
 
 		ports {
 			#address-cells = <0x01>;
@@ -2953,16 +2955,16 @@
 		#iommu-cells = <0x00>;
 		rockchip,disable-device-link-resume;
                         
+		status = "okay";
+		phandle = <0x8f>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x8f>;
-	};
+                        };	};
 
 	dsi@fe060000 {
 		compatible = "rockchip,rk3568-mipi-dsi";
@@ -3065,6 +3067,10 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0x9f 0xa0 0xa1>;
                         
+		status = "okay";
+		rockchip,phy-table = <0x58834d4 0x8009 0x00 0x270 0x9d5b340 0x800b 0x00 0x26d 0xb1069a8 0x800b 0x00 0x1ed 0x11b3dc40 0x800b 0x00 0x1ad 0x2367b880 0x8029 0x00 0x88 0x00 0x00 0x00 0x00>;
+		phandle = <0x12b>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -3072,10 +3078,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		rockchip,phy-table = <0x58834d4 0x8009 0x00 0x270 0x9d5b340 0x800b 0x00 0x26d 0xb1069a8 0x800b 0x00 0x1ed 0x11b3dc40 0x800b 0x00 0x1ad 0x2367b880 0x8029 0x00 0x88 0x00 0x00 0x00 0x00>;
-		phandle = <0x12b>;
-
 		ports {
 			#address-cells = <0x01>;
 			#size-cells = <0x00>;
@@ -3089,16 +3091,16 @@
 					reg = <0x00>;
 					remote-endpoint = <0x1a>;
                         
+					status = "okay";
+					phandle = <0x93>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-					status = "okay";
-					phandle = <0x93>;
-				};
+                        };				};
 
 				endpoint@1 {
 					reg = <0x01>;
@@ -3122,6 +3124,10 @@
 		phy-names = "dp";
 		power-domains = <0x25 0x09>;
                         
+		status = "okay";
+
+		force-hpd;
+		phandle = <0x1a1>;
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -3129,9 +3135,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		force-hpd;
-		phandle = <0x1a1>;
 
 		ports {
 			#address-cells = <0x01>;
@@ -3154,16 +3157,16 @@
 					reg = <0x01>;
 					remote-endpoint = <0x19>;
                         
+					status = "okay";
+					phandle = <0x96>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-					status = "okay";
-					phandle = <0x96>;
-				};
+                        };				};
 			};
 
 			port@1 {
@@ -3175,16 +3178,16 @@
 				endpoint@0 {
 					remote-endpoint = <0xa5>;
                         
+					status = "okay";
+					phandle = <0x13f>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-					status = "okay";
-					phandle = <0x13f>;
-				};
+                        };				};
 			};
 		};
 	};
@@ -3400,16 +3403,16 @@
 		compatible = "rockchip,rk3568-dfi";
 		rockchip,pmugrf = <0x3d>;
                         
+		status = "okay";
+		phandle = <0xa6>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0xa6>;
-	};
+                        };	};
 
 	dmc {
 		compatible = "rockchip,rk3568-dmc";
@@ -3429,17 +3432,17 @@
 		auto-freq-en = <0x01>;
 		#cooling-cells = <0x02>;
                         
+		status = "okay";
+		center-supply = <0x75>;
+		phandle = <0x16>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		center-supply = <0x75>;
-		phandle = <0x16>;
-	};
+                        };	};
 
 	dmc-fsp {
 		compatible = "rockchip,rk3568-dmc-fsp";
@@ -3450,16 +3453,16 @@
 		lpddr4_params = <0xac>;
 		lpddr4x_params = <0xad>;
                         
+		status = "okay";
+		phandle = <0x1a9>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1a9>;
-	};
+                        };	};
 
 	dmc-opp-table {
 		compatible = "operating-points-v2";
@@ -3706,14 +3709,8 @@
 		resets = <0x23 0xd6>;
 		reset-names = "reset";
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
+
 		supports-sdio;
 		bus-width = <0x04>;
 		disable-wp;
@@ -3727,6 +3724,13 @@
 		pinctrl-0 = <0xbd 0xbe 0xbf>;
 		sd-uhs-sdr50;
 		phandle = <0x1b0>;
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };
 	};
 
 	spi@fe300000 {
@@ -3740,16 +3744,16 @@
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x1b1>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1b1>;
-	};
+                        };	};
 
 	sdhci@fe310000 {
 		compatible = "rockchip,rk3568-dwcmshc\0rockchip,dwcmshc-sdhci";
@@ -3762,6 +3766,13 @@
 		resets = <0x23 0x78 0x23 0x76 0x23 0x75 0x23 0x77 0x23 0x79>;
 		reset-names = "core\0bus\0axi\0block\0timer";
                         
+		status = "okay";
+		bus-width = <0x08>;
+
+		supports-emmc;
+		non-removable;
+		max-frequency = <0xbebc200>;
+		phandle = <0x1b2>;
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -3769,12 +3780,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		bus-width = <0x08>;
-		supports-emmc;
-		non-removable;
-		max-frequency = <0xbebc200>;
-		phandle = <0x1b2>;
 	};
 
 	nandc@fe330000 {
@@ -3785,6 +3790,11 @@
 		clocks = <0x23 0x75 0x23 0x74>;
 		clock-names = "clk_nandc\0hclk_nandc";
                         
+		status = "okay";
+
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		phandle = <0x1b3>;
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -3792,10 +3802,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		#address-cells = <0x01>;
-		#size-cells = <0x00>;
-		phandle = <0x1b3>;
 
 		nand@0 {
 			reg = <0x00>;
@@ -3828,16 +3834,16 @@
 		resets = <0x23 0x6d>;
 		reset-names = "reset";
                         
+		status = "okay";
+		phandle = <0x1b5>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1b5>;
-	};
+                        };	};
 
 	otp@fe38c000 {
 		compatible = "rockchip,rk3568-otp";
@@ -3978,16 +3984,16 @@
 		rockchip,playback-only;
 		#sound-dai-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x12a>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x12a>;
-	};
+                        };	};
 
 	i2s@fe410000 {
 		compatible = "rockchip,rk3568-i2s-tdm";
@@ -4005,17 +4011,17 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0xc1 0xc2 0xc3 0xc4>;
                         
+		status = "okay";
+		rockchip,clk-trcm = <0x01>;
+		phandle = <0xd3>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		rockchip,clk-trcm = <0x01>;
-		phandle = <0xd3>;
-	};
+                        };	};
 
 	i2s@fe420000 {
 		compatible = "rockchip,rk3568-i2s-tdm";
@@ -4032,17 +4038,17 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0xc5 0xc6 0xc7 0xc8>;
                         
+		status = "okay";
+		rockchip,bclk-fs = <0x24>;
+		phandle = <0x127>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		rockchip,bclk-fs = <0x24>;
-		phandle = <0x127>;
-	};
+                        };	};
 
 	i2s@fe430000 {
 		compatible = "rockchip,rk3568-i2s-tdm";
@@ -4075,16 +4081,16 @@
 		pinctrl-0 = <0xce 0xd0 0xd2>;
 		#sound-dai-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x12c>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x12c>;
-	};
+                        };	};
 
 	vad@fe450000 {
 		compatible = "rockchip,rk3568-vad";
@@ -4261,19 +4267,9 @@
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		phandle = <0x1c0>;
 
-		es7202@30 {
-			compatible = "ES7202_PDM_ADC_1";
-                        
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -4281,15 +4277,31 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
+		es7202@30 {
+			compatible = "ES7202_PDM_ADC_1";
+                        
 			status = "okay";
 			reg = <0x30>;
-			#sound-dai-cells = <0x00>;
+
+		#sound-dai-cells = <0x00>;
 			phandle = <0x332>;
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };
 		};
 
 		es7202_sdi3@32 {
 			compatible = "ES7202_PDM_ADC_2";
                         
+			status = "okay";
+			reg = <0x32>;
+
+		#sound-dai-cells = <0x00>;
+			phandle = <0x333>;
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -4297,10 +4309,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-			status = "okay";
-			reg = <0x32>;
-			#sound-dai-cells = <0x00>;
-			phandle = <0x333>;
 		};
 	};
 
@@ -4348,16 +4356,16 @@
 		clock-names = "tclk\0pclk";
 		interrupts = <0x00 0x95 0x04>;
                         
+		status = "okay";
+		phandle = <0x1c4>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1c4>;
-	};
+                        };	};
 
 	spi@fe610000 {
 		compatible = "rockchip,rk3066-spi";
@@ -4443,16 +4451,16 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0xec 0xed>;
                         
+		status = "okay";
+		phandle = <0x1c9>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x1c9>;
-	};
+                        };	};
 
 	serial@fe660000 {
 		compatible = "rockchip,rk3568-uart\0snps,dw-apb-uart";
@@ -4656,16 +4664,16 @@
 		clocks = <0x23 0x15d 0x23 0x15c>;
 		clock-names = "pwm\0pclk";
                         
+		status = "okay";
+		phandle = <0x124>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x124>;
-	};
+                        };	};
 
 	pwm@fe6f0030 {
 		compatible = "rockchip,rk3568-pwm\0rockchip,rk3328-pwm";
@@ -4752,6 +4760,9 @@
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x1f>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -4759,9 +4770,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		phandle = <0x1f>;
-
 		tsadc@0 {
 			reg = <0x00>;
 			nvmem-cells = <0x106 0x107>;
@@ -4785,17 +4793,17 @@
 		resets = <0x23 0x180>;
 		reset-names = "saradc-apb";
                         
+		status = "okay";
+		vref-supply = <0x10a>;
+		phandle = <0x1dd>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		vref-supply = <0x10a>;
-		phandle = <0x1dd>;
-	};
+                        };	};
 
 	mailbox@fe780000 {
 		compatible = "rockchip,rk3568-mailbox\0rockchip,rk3368-mailbox";
@@ -4821,16 +4829,16 @@
 		rockchip,pipe-grf = <0x10b>;
 		rockchip,pipe-phy-grf = <0x10c>;
                         
+		status = "okay";
+		phandle = <0x24>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x24>;
-	};
+                        };	};
 
 	phy@fe830000 {
 		compatible = "rockchip,rk3568-naneng-combphy";
@@ -4845,16 +4853,16 @@
 		rockchip,pipe-grf = <0x10b>;
 		rockchip,pipe-phy-grf = <0x10d>;
                         
+		status = "okay";
+		phandle = <0x26>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x26>;
-	};
+                        };	};
 
 	phy@fe840000 {
 		compatible = "rockchip,rk3568-naneng-combphy";
@@ -4869,16 +4877,16 @@
 		rockchip,pipe-grf = <0x10b>;
 		rockchip,pipe-phy-grf = <0x10e>;
                         
+		status = "okay";
+		phandle = <0x27>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x27>;
-	};
+                        };	};
 
 	phy@fe850000 {
 		compatible = "rockchip,rk3568-dsi-dphy\0rockchip,rk3568-video-phy";
@@ -4892,16 +4900,16 @@
 		power-domains = <0x25 0x09>;
 		#phy-cells = <0x00>;
                         
+		status = "okay";
+		phandle = <0x35>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-		phandle = <0x35>;
-	};
+                        };	};
 
 	phy@fe860000 {
 		compatible = "rockchip,rk3568-dsi-dphy\0rockchip,rk3568-video-phy";
@@ -4961,19 +4969,9 @@
 		clock-output-names = "usb480m_phy";
 		rockchip,usbgrf = <0x111>;
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		phandle = <0x110>;
 
-		host-port {
-			#phy-cells = <0x00>;
-                        
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -4981,24 +4979,34 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
+		host-port {
+			#phy-cells = <0x00>;
+                        
 			status = "okay";
 			phy-supply = <0x112>;
 			phandle = <0x2b>;
-		};
+
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };		};
 
 		otg-port {
 			#phy-cells = <0x00>;
                         
+			status = "okay";
+			phandle = <0x28>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phandle = <0x28>;
-		};
+                        };		};
 	};
 
 	usb2-phy@fe8b0000 {
@@ -5010,19 +5018,9 @@
 		#clock-cells = <0x00>;
 		rockchip,usbgrf = <0x113>;
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		phandle = <0x2c>;
 
-		host-port {
-			#phy-cells = <0x00>;
-                        
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -5030,25 +5028,35 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
+		host-port {
+			#phy-cells = <0x00>;
+                        
 			status = "okay";
 			phy-supply = <0x114>;
 			phandle = <0x2e>;
-		};
+
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };		};
 
 		otg-port {
 			#phy-cells = <0x00>;
                         
+			status = "okay";
+			phy-supply = <0x114>;
+			phandle = <0x2d>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-			status = "okay";
-			phy-supply = <0x114>;
-			phandle = <0x2d>;
-		};
+                        };		};
 	};
 
 	phy@fe8c0000 {
@@ -7589,15 +7597,15 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <0xee>;
                         
+		status = "okay";
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-	};
+                        };	};
 
 	debug@fd904000 {
 		compatible = "rockchip,debug";
@@ -7651,6 +7659,11 @@
 
 	bt-sco {
                         
+		status = "okay";
+		compatible = "delta,dfbmcs320";
+
+		#sound-dai-cells = <0x00>;
+		phandle = <0x128>;
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -7658,27 +7671,23 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		compatible = "delta,dfbmcs320";
-		#sound-dai-cells = <0x00>;
-		phandle = <0x128>;
 	};
 
 	sound_es7202 {
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "pdm";
 		simple-audio-card,name = "rockchip,es7202";
 		simple-audio-card,mclk-fs = <0x100>;
 
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };
 		simple-audio-card,cpu {
 			sound-dai = <0x12c>;
 		};
@@ -7690,13 +7699,6 @@
 
 	bt-sound {
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "dsp_b";
@@ -7707,6 +7709,13 @@
 		simple-audio-card,frame-master = <0x126>;
 		phandle = <0x126>;
 
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };
 		simple-audio-card,cpu {
 			sound-dai = <0x127>;
 		};
@@ -7743,6 +7752,9 @@
 		simple-audio-card,mclk-fs = <0x80>;
 		simple-audio-card,name = "rockchip,hdmi";
                         
+		status = "okay";
+		phandle = <0x31b>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -7750,9 +7762,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		phandle = <0x31b>;
-
 		simple-audio-card,cpu {
 			sound-dai = <0x12a>;
 		};
@@ -7796,6 +7805,12 @@
 
 	rk809-sound {
                         
+		status = "okay";
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,name = "rockchip,rk809-codec";
+		simple-audio-card,mclk-fs = <0x100>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
@@ -7803,12 +7818,6 @@
                                         regulator-max-microvolt = <5000000>;
                                 };
                         };
-		status = "okay";
-		compatible = "simple-audio-card";
-		simple-audio-card,format = "i2s";
-		simple-audio-card,name = "rockchip,rk809-codec";
-		simple-audio-card,mclk-fs = <0x100>;
-
 		simple-audio-card,cpu {
 			sound-dai = <0xd3>;
 		};
@@ -7912,13 +7921,6 @@
 
 	sdio-pwrseq {
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
 		compatible = "mmc-pwrseq-simple";
 		clocks = <0x137 0x01>;
@@ -7927,26 +7929,33 @@
 		pinctrl-0 = <0x138>;
 		reset-gpios = <0x41 0x10 0x01>;
 		phandle = <0xbc>;
-	};
 
-	wireless-wlan {
-		compatible = "wlan-platdata";
-		rockchip,grf = <0x3c>;
-		wifi_chip_type = "rtl8821cs";
-                        
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
+                        };	};
+
+	wireless-wlan {
+		compatible = "wlan-platdata";
+		rockchip,grf = <0x3c>;
+		wifi_chip_type = "rtl8821cs";
+                        
 		status = "okay";
 		pinctrl-names = "default";
 		pinctrl-0 = <0x139>;
 		WIFI,host_wake_irq = <0x41 0x14 0x00>;
 		phandle = <0x321>;
-	};
+
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };	};
 
 	wireless-bluetooth {
 		compatible = "bluetooth-platdata";
@@ -7965,15 +7974,15 @@
 
 	test-power {
                         
+		status = "okay";
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-		status = "okay";
-	};
+                        };	};
 
 	rk-headset {
 		compatible = "rockchip_headset";
@@ -7995,14 +8004,8 @@
 	edp-panel {
 		compatible = "simple-panel";
                         
-                        regulators {
-                                otg-vbus {
-                                        regulator-name = "otg-vbus";
-                                        regulator-min-microvolt = <5000000>;
-                                        regulator-max-microvolt = <5000000>;
-                                };
-                        };
 		status = "okay";
+
 		// power-supply = <0x125>;  // disabled: violent mux handles LCD power
 		backlight = <0x13d>;
 		enable-gpios = <0x4c 0x03 0x00>;
@@ -8013,7 +8016,13 @@
 		prepare-delay-ms = <0x14>;
 		enable-delay-ms = <0x14>;
 		phandle = <0x325>;
-
+                        regulators {
+                                otg-vbus {
+                                        regulator-name = "otg-vbus";
+                                        regulator-min-microvolt = <5000000>;
+                                        regulator-max-microvolt = <5000000>;
+                                };
+                        };
 		display-timings {
 			native-mode = <0x13e>;
 
@@ -8045,16 +8054,16 @@
 				endpoint {
 					remote-endpoint = <0x13f>;
                         
+					status = "okay";
+					phandle = <0xa5>;
+
                         regulators {
                                 otg-vbus {
                                         regulator-name = "otg-vbus";
                                         regulator-min-microvolt = <5000000>;
                                         regulator-max-microvolt = <5000000>;
                                 };
-                        };
-					status = "okay";
-					phandle = <0xa5>;
-				};
+                        };				};
 			};
 		};
 	};
