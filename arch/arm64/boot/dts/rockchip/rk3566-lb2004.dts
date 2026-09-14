@@ -710,13 +710,31 @@
 	};
 };
 
+/* 3.3V rail alias - the io-domain driver cannot read the voltage of
+ * RK809 SWITCH_REG1 (vcc_3v3), which made the whole io-domains probe
+ * fail (-22) and left ALL VCCIO voltages unset (USB/WiFi/GMAC IO dead).
+ * This fixed regulator models the same always-on 3.3V rail with a
+ * readable voltage. */
+/ {
+	vcc3v3_io: vcc3v3-io {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3_io";
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&vcc5v0_sys>;
+	};
+};
+
 /*
  * lb2004 io-domains: only "rockchip,rk3568-pmu-io-voltage-domain" (pmugrf)
  * has a driver match entry; the main-GRF io-domains node stays disabled
  * (factory puts ALL domains in the pmugrf node too). Supply mapping is
- * taken from the factory Android DTB phandles:
+ * taken from the factory Android DTB phandles, except vccio5/7: they map
+ * to the readable fixed regulator vcc3v3_io above instead of vcc_3v3.
  *   pmuio1/2 = vcc3v3_pmu, vccio1 = vccio_acodec, vccio3 = vccio_sd,
- *   vccio4/6 = vcc_1v8, vccio5/7 = vcc_3v3, vccio2 = unset (factory same)
+ *   vccio4/6 = vcc_1v8, vccio5/7 = vcc3v3_io, vccio2 = unset (factory same)
  */
 &pmu_io_domains {
 	status = "okay";
@@ -725,9 +743,9 @@
 	vccio1-supply = <&vccio_acodec>;
 	vccio3-supply = <&vccio_sd>;
 	vccio4-supply = <&vcc_1v8>;
-	vccio5-supply = <&vcc_3v3>;
+	vccio5-supply = <&vcc3v3_io>;
 	vccio6-supply = <&vcc_1v8>;
-	vccio7-supply = <&vcc_3v3>;
+	vccio7-supply = <&vcc3v3_io>;
 };
 
 /*
