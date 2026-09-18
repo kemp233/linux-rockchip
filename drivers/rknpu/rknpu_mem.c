@@ -153,6 +153,13 @@ int rknpu_mem_create_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 			goto err_detach_dma_buf;
 		}
 		rknpu_obj->kv_addr = rknpu_obj->vmap_map.vaddr;
+		/* Hold an extra reference for the lifetime of the kernel
+		 * mapping.  On process exit the fd table may close the
+		 * dma_buf fd BEFORE the /dev/rknpu fd; without this extra
+		 * ref the dmabuf would be released (dma_buf_release BUGs on
+		 * a nonzero vmapping_counter) before rknpu_release runs the
+		 * matching dma_buf_vunmap. */
+		get_dma_buf(dmabuf);
 	}
 
 	rknpu_obj->size = PAGE_ALIGN(args.size);
@@ -200,6 +207,8 @@ err_unmap_kv_addr:
 		dma_resv_unlock(rknpu_obj->dmabuf->resv);
 		rknpu_obj->kv_addr = NULL;
 		iosys_map_clear(&rknpu_obj->vmap_map);
+		/* drop the extra reference taken for the kernel map */
+		dma_buf_put(rknpu_obj->dmabuf);
 	}
 
 err_detach_dma_buf:
@@ -268,6 +277,8 @@ int rknpu_mem_destroy_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 			dma_resv_unlock(rknpu_obj->dmabuf->resv);
 			rknpu_obj->kv_addr = NULL;
 			iosys_map_clear(&rknpu_obj->vmap_map);
+			/* drop the extra reference taken for the kernel map */
+			dma_buf_put(rknpu_obj->dmabuf);
 		}
 
 		if (rknpu_obj->dmabuf && !rknpu_obj->owner)

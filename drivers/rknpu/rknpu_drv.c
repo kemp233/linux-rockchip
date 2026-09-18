@@ -549,6 +549,8 @@ static int rknpu_release(struct inode *inode, struct file *file)
 			dma_resv_unlock(entry->dmabuf->resv);
 			entry->kv_addr = NULL;
 			iosys_map_clear(&entry->vmap_map);
+			/* drop the extra reference taken for the kernel map */
+			dma_buf_put(entry->dmabuf);
 		}
 
 		if (entry->dmabuf && !entry->owner)
