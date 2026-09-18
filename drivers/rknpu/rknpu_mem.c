@@ -6,6 +6,8 @@
 
 #include <linux/version.h>
 #include <linux/rk-dma-heap.h>
+#include <linux/dma-resv.h>
+#include <linux/iosys-map.h>
 
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
 #include <linux/dma-map-ops.h>
@@ -27,12 +29,10 @@ int rknpu_mem_create_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	struct scatterlist *sgl;
 	dma_addr_t phys;
 	struct dma_buf *dmabuf;
-	struct page **pages;
-	struct page *page;
 	struct rknpu_mem_object *rknpu_obj = NULL;
 	struct rknpu_session *session = NULL;
 	int i, fd;
-	unsigned int length, page_count;
+	unsigned int length;
 	unsigned int in_size = _IOC_SIZE(cmd);
 	unsigned int k_size = sizeof(struct rknpu_mem_create);
 	char *k_data = (char *)&args;
@@ -47,7 +47,10 @@ int rknpu_mem_create_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	if (k_size > in_size)
 		memset(k_data + in_size, 0, k_size - in_size);
 
-	if (args.flags & RKNPU_MEM_NON_CONTIGUOUS) {
+	/* Non-contiguous (system-heap) buffers are only usable when the
+	 * NPU iommu is on: it maps the scattered pages into one IOVA.
+	 * librknnrt requests this layout as soon as it detects the iommu. */
+	if ((args.flags & RKNPU_MEM_NON_CONTIGUOUS) && !rknpu_dev->iommu_en) {
 		LOG_ERROR("%s: malloc iommu memory unsupported in current!\n",
 			  __func__);
 		ret = -EINVAL;
@@ -107,35 +110,49 @@ int rknpu_mem_create_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 		goto err_free_dma_buf;
 	}
 
+	/* The NPU gets ONE device-visible base address for the buffer, so
+	 * the buffer must be contiguous in device space: with the rknpu
+	 * iommu enabled, dma_map_sgtable() coalesces it into a single
+	 * segment whose dma address is the IOVA base; without an iommu it
+	 * must be physically contiguous.
+	 *
+	 * The upstream loop kept the LAST segment's address/length: it
+	 * handed the NPU the wrong base and under-mapped the kernel vmap.
+	 * Buffers the exporter splits into several segments (e.g. the
+	 * system dma-heap used by librknnrt) then had their tail pages
+	 * unmapped, causing "Unable to handle kernel paging request" in
+	 * rknpu_job_subcore_commit reading last_task->int_mask
+	 * (LB2004 ramoops: pc=...+0x174, fault at vmap_base+0x307c). */
 	for_each_sgtable_sg(table, sgl, i) {
-		phys = sg_dma_address(sgl);
-		page = sg_page(sgl);
-		length = sg_dma_len(sgl);
+		if (i == 0) {
+			phys = sg_dma_address(sgl);
+			length = sg_dma_len(sgl);
+		}
 		LOG_DEBUG("%s, %d, phys: %pad, length: %u\n", __func__,
 			  __LINE__, &phys, length);
 	}
 
+	if (!rknpu_dev->iommu_en && table->nents > 1) {
+		LOG_ERROR(
+			"%s: scattered dmabuf (%u segments) requires the rknpu iommu, enable iommu@fde4b000\n",
+			__func__, table->nents);
+		ret = -EINVAL;
+		goto err_detach_dma_buf;
+	}
+
 	if (args.flags & RKNPU_MEM_KERNEL_MAPPING) {
-		page_count = length >> PAGE_SHIFT;
-		pages = vmalloc(page_count * sizeof(struct page));
-		if (!pages) {
-			LOG_ERROR("alloc pages failed\n");
-			ret = -ENOMEM;
+		/* dma_buf_vmap() maps every page of the buffer regardless of
+		 * how the exporter laid it out.  The old hand-rolled vmap
+		 * only mapped the last segment's pages, so the kernel read
+		 * task descriptors past the end of the mapping. */
+		dma_resv_lock(dmabuf->resv, NULL);
+		ret = dma_buf_vmap(dmabuf, &rknpu_obj->vmap_map);
+		dma_resv_unlock(dmabuf->resv);
+		if (ret) {
+			LOG_ERROR("dma_buf_vmap failed: %d\n", ret);
 			goto err_detach_dma_buf;
 		}
-
-		for (i = 0; i < page_count; i++)
-			pages[i] = &page[i];
-
-		rknpu_obj->kv_addr =
-			vmap(pages, page_count, VM_MAP, PAGE_KERNEL);
-		if (!rknpu_obj->kv_addr) {
-			LOG_ERROR("vmap pages addr failed\n");
-			ret = -ENOMEM;
-			goto err_free_pages;
-		}
-		vfree(pages);
-		pages = NULL;
+		rknpu_obj->kv_addr = rknpu_obj->vmap_map.vaddr;
 	}
 
 	rknpu_obj->size = PAGE_ALIGN(args.size);
@@ -177,12 +194,13 @@ int rknpu_mem_create_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	return 0;
 
 err_unmap_kv_addr:
-	vunmap(rknpu_obj->kv_addr);
-	rknpu_obj->kv_addr = NULL;
-
-err_free_pages:
-	vfree(pages);
-	pages = NULL;
+	if (rknpu_obj->kv_addr) {
+		dma_resv_lock(rknpu_obj->dmabuf->resv, NULL);
+		dma_buf_vunmap(rknpu_obj->dmabuf, &rknpu_obj->vmap_map);
+		dma_resv_unlock(rknpu_obj->dmabuf->resv);
+		rknpu_obj->kv_addr = NULL;
+		iosys_map_clear(&rknpu_obj->vmap_map);
+	}
 
 err_detach_dma_buf:
 	dma_buf_unmap_attachment(attachment, table, DMA_BIDIRECTIONAL);
@@ -244,10 +262,15 @@ int rknpu_mem_destroy_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	spin_unlock(&rknpu_dev->lock);
 
 	if (rknpu_obj == entry) {
-		vunmap(rknpu_obj->kv_addr);
-		rknpu_obj->kv_addr = NULL;
+		if (rknpu_obj->kv_addr && rknpu_obj->dmabuf) {
+			dma_resv_lock(rknpu_obj->dmabuf->resv, NULL);
+			dma_buf_vunmap(rknpu_obj->dmabuf, &rknpu_obj->vmap_map);
+			dma_resv_unlock(rknpu_obj->dmabuf->resv);
+			rknpu_obj->kv_addr = NULL;
+			iosys_map_clear(&rknpu_obj->vmap_map);
+		}
 
-		if (!rknpu_obj->owner)
+		if (rknpu_obj->dmabuf && !rknpu_obj->owner)
 			dma_buf_put(rknpu_obj->dmabuf);
 
 		kfree(rknpu_obj);

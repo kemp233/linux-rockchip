@@ -869,7 +869,9 @@ int rknpu_submit_ioctl(struct rknpu_device *rknpu_dev, unsigned long data)
 		return ret;
 	}
 
+	rknpu_power_get(rknpu_dev);
 	ret = rknpu_submit(rknpu_dev, &args);
+	rknpu_power_put_delay(rknpu_dev);
 
 	if (unlikely(copy_to_user((struct rknpu_submit *)data, &args,
 				  sizeof(struct rknpu_submit)))) {

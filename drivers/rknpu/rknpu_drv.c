@@ -6,6 +6,8 @@
 
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-resv.h>
+#include <linux/iosys-map.h>
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 #include <linux/irqdomain.h>
@@ -541,10 +543,15 @@ static int rknpu_release(struct inode *inode, struct file *file)
 			"Fd close free rknpu_obj: %#llx, rknpu_obj->dma_addr: %#llx\n",
 			(__u64)(uintptr_t)entry, (__u64)entry->dma_addr);
 
-		vunmap(entry->kv_addr);
-		entry->kv_addr = NULL;
+		if (entry->kv_addr && entry->dmabuf) {
+			dma_resv_lock(entry->dmabuf->resv, NULL);
+			dma_buf_vunmap(entry->dmabuf, &entry->vmap_map);
+			dma_resv_unlock(entry->dmabuf->resv);
+			entry->kv_addr = NULL;
+			iosys_map_clear(&entry->vmap_map);
+		}
 
-		if (!entry->owner)
+		if (entry->dmabuf && !entry->owner)
 			dma_buf_put(entry->dmabuf);
 
 		list_del(&entry->head);

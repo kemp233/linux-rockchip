@@ -169,3 +169,7 @@ sphinx_*/
 
 # Rust analyzer configuration
 /rust-project.json
+drivers/rknpu/.cmd
+drivers/rknpu/.*.cmd
+*.cmd
+.tmp_*

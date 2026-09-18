@@ -33,6 +33,7 @@ struct rknpu_mem_object {
 	struct page **pages;
 	struct sg_table *sgt;
 	struct dma_buf *dmabuf;
+	struct iosys_map vmap_map;
 	struct list_head head;
 	unsigned int owner;
 };
