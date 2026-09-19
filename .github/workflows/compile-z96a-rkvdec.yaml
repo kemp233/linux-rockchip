@@ -63,13 +63,13 @@ jobs:
             '# CONFIG_MALI_MIDGARD is not set' >> .config
           cat .config | tail -8
           yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
-          echo "=== verify config (hard gate: staging rkvdec module must be enabled) ==="
-          grep -qE "^CONFIG_VIDEO_ROCKCHIP_VDEC=m$" .config || {
-            echo "FAIL: CONFIG_VIDEO_ROCKCHIP_VDEC is not =m after olddefconfig"
-            grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_USB_USBNET" .config
+          echo "=== verify config (hard gate: RKVDEC2 main core must be enabled for HEVC) ==="
+          grep -qE "^CONFIG_ROCKCHIP_MPP_RKVDEC2=y$" .config || {
+            echo "FAIL: CONFIG_ROCKCHIP_MPP_RKVDEC2 is not =y after olddefconfig"
+            grep -E "CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_USB_USBNET" .config
             exit 1
           }
-          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_USB_USBNET|CONFIG_DMABUF_HEAPS_ROCKCHIP|CONFIG_CHARGER_SC8886S|CONFIG_DRM_PANFROST" .config || true
+          grep -E "CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_USB_USBNET|CONFIG_DMABUF_HEAPS_ROCKCHIP|CONFIG_CHARGER_SC8886S|CONFIG_DRM_PANFROST" .config || true
 
       - name: Build Image
         run: |
