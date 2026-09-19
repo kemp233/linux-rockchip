@@ -29,15 +29,14 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/kemp233/sc8886s-driver/main/sc8886s_charger.c \
             -o drivers/power/supply/sc8886s_charger.c
-          grep -q CHARGER_SC8886S drivers/power/supply/Kconfig || cat >> drivers/power/supply/Kconfig <<'EOF'
-
-config CHARGER_SC8886S
-  tristate "SouthChip SC8886S battery charger"
-  depends on I2C
-  help
-    SouthChip SC8886S charger on Z96A (i2c0 0x6b). Provides real
-    battery voltage/current/SOC from the charger's own ADC.
-EOF
+          grep -q CHARGER_SC8886S drivers/power/supply/Kconfig || printf '%s\n' \
+            '' \
+            'config CHARGER_SC8886S' \
+            '  tristate "SouthChip SC8886S battery charger"' \
+            '  depends on I2C' \
+            '  help' \
+            '  SouthChip SC8886S charger on Z96A (i2c0 0x6b). Provides real' \
+            '  battery voltage/current/SOC from the charger own ADC.' >> drivers/power/supply/Kconfig
           grep -q sc8886s_charger drivers/power/supply/Makefile || \
             echo 'obj-$(CONFIG_CHARGER_SC8886S) += sc8886s_charger.o' >> drivers/power/supply/Makefile
           ls -la drivers/power/supply/sc8886s_charger.c
