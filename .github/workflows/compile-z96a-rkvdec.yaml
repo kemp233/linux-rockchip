@@ -2,6 +2,7 @@ name: Build Z96A rk3568 kernel with vendor RKVDEC2
 
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     branches: [rk-6.1-rkr5.1]
     paths:
@@ -10,7 +11,7 @@ on:
 
 jobs:
   Build:
-    name: Compile Z96A kernel + rkvdec module
+    name: Compile Z96A kernel (vendor RKVDEC2)
     runs-on: ubuntu-24.04-arm
     if: ${{ github.repository_owner == 'kemp233' }}
     steps:
@@ -99,13 +100,21 @@ jobs:
             awk '/^VERSION/{v=$3} /^PATCHLEVEL/{p=$3} /^SUBLEVEL/{s=$3} END{print v"."p"."s}' Makefile)
           TAG="z96a-rkvdec-${KVER}"
           echo "Kernel version: ${KVER} -> tag: ${TAG}"
+          # create-or-update: existing tag must NOT fail the build
           gh release create "${TAG}" \
             --repo kemp233/linux-rockchip \
             --title "Z96A kernel ${KVER} + vendor RKVDEC2" \
             --notes "vendor mpp rkvdec2 (main 4K60 decode core, V4L2 M2M staging removed) | Linux ${KVER} | Commit: ${{ github.sha }}" \
             arch/arm64/boot/Image \
             arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb \
+            /tmp/z96a-modules.tar.gz \
+          || gh release upload "${TAG}" \
+            --repo kemp233/linux-rockchip \
+            --clobber \
+            arch/arm64/boot/Image \
+            arch/arm64/boot/dts/rockchip/rk3568-z96a-laptop-v2.dtb \
             /tmp/z96a-modules.tar.gz
+          echo "Release: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
           echo "Release: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
