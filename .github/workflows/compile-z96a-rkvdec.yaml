@@ -51,6 +51,7 @@ jobs:
             '# V4L2 staging rkvdec - big core for Chromium V4L2VDA (HEVC/H264/VP9)' \
             'CONFIG_STAGING_MEDIA=y' \
             'CONFIG_VIDEO_ROCKCHIP_VDEC=m' \
+            '# CONFIG_ROCKCHIP_MPP_RKVDEC2 is not set' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP=y' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP_CMA_HEAP=y' \
             '# USB NIC (RTL8153 ECM) - board network lifeline, do not drop' \
