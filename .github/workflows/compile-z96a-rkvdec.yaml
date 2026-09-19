@@ -48,8 +48,9 @@ jobs:
           printf '%s\n' \
             'CONFIG_LOCALVERSION="-legacy-rockchip-rk3568-z96a"' \
             'CONFIG_LOCALVERSION_AUTO=n' \
-            '# vendor MPP rkvdec2 - main 4K60 decode core (staging V4L2 M2M removed)' \
-            'CONFIG_ROCKCHIP_MPP_RKVDEC2=y' \
+            '# V4L2 staging rkvdec - big core for Chromium V4L2VDA (HEVC/H264/VP9)' \
+            'CONFIG_STAGING_MEDIA=y' \
+            'CONFIG_VIDEO_ROCKCHIP_VDEC=m' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP=y' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP_CMA_HEAP=y' \
             '# USB NIC (RTL8153 ECM) - board network lifeline, do not drop' \
@@ -62,13 +63,13 @@ jobs:
             '# CONFIG_MALI_MIDGARD is not set' >> .config
           cat .config | tail -8
           yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
-          echo "=== verify config (hard gate: RKVDEC2 main core must be enabled) ==="
-          grep -qE "^CONFIG_ROCKCHIP_MPP_RKVDEC2=y$" .config || {
-            echo "FAIL: CONFIG_ROCKCHIP_MPP_RKVDEC2 is not =y after olddefconfig"
-            grep -E "CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_USB_USBNET" .config
+          echo "=== verify config (hard gate: staging rkvdec module must be enabled) ==="
+          grep -qE "^CONFIG_VIDEO_ROCKCHIP_VDEC=m$" .config || {
+            echo "FAIL: CONFIG_VIDEO_ROCKCHIP_VDEC is not =m after olddefconfig"
+            grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_USB_USBNET" .config
             exit 1
           }
-          grep -E "CONFIG_ROCKCHIP_MPP_RKVDEC2|CONFIG_USB_USBNET|CONFIG_DMABUF_HEAPS_ROCKCHIP" .config || true
+          grep -E "CONFIG_VIDEO_ROCKCHIP_VDEC|CONFIG_USB_USBNET|CONFIG_DMABUF_HEAPS_ROCKCHIP|CONFIG_CHARGER_SC8886S|CONFIG_DRM_PANFROST" .config || true
 
       - name: Build Image
         run: |
