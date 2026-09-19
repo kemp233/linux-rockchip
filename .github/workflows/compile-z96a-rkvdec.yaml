@@ -95,6 +95,9 @@ jobs:
 
       - name: Release
         if: github.event_name != 'pull_request'
+        # cross-repo workflow_call carries the CALLER's GITHUB_TOKEN which
+        # cannot create releases here -> keep non-fatal, artifacts remain
+        continue-on-error: true
         run: |
           KVER=$(make -s ARCH=arm64 kernelrelease 2>/dev/null || \
             awk '/^VERSION/{v=$3} /^PATCHLEVEL/{p=$3} /^SUBLEVEL/{s=$3} END{print v"."p"."s}' Makefile)
