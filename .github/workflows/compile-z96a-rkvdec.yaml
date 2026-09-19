@@ -25,6 +25,23 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc
 
+      - name: Add SC8886S charger driver (builtin, real battery SOC)
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/kemp233/sc8886s-driver/main/sc8886s_charger.c \
+            -o drivers/power/supply/sc8886s_charger.c
+          grep -q CHARGER_SC8886S drivers/power/supply/Kconfig || cat >> drivers/power/supply/Kconfig <<'EOF'
+
+config CHARGER_SC8886S
+	tristate "SouthChip SC8886S battery charger"
+	depends on I2C
+	help
+	  SouthChip SC8886S charger on Z96A (i2c0 0x6b). Provides real
+	  battery voltage/current/SOC from the charger's own ADC.
+EOF
+          grep -q sc8886s_charger drivers/power/supply/Makefile || \
+            echo 'obj-$(CONFIG_CHARGER_SC8886S) += sc8886s_charger.o' >> drivers/power/supply/Makefile
+          ls -la drivers/power/supply/sc8886s_charger.c
+
       - name: Configure .config (rockchip BSP + rkvdec fragment)
         run: |
           cp arch/arm64/configs/rockchip_linux_defconfig .config
@@ -38,7 +55,9 @@ jobs:
             'CONFIG_DMABUF_HEAPS_ROCKCHIP_CMA_HEAP=y' \
             '# USB NIC (RTL8153 ECM) - board network lifeline, do not drop' \
             'CONFIG_USB_USBNET=y' \
-            'CONFIG_USB_RTL8153_ECM=y' >> .config
+            'CONFIG_USB_RTL8153_ECM=y' \
+            '# SC8886S charger builtin - real battery SOC, no out-of-tree module' \
+            'CONFIG_CHARGER_SC8886S=y' >> .config
           cat .config | tail -8
           yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
           echo "=== verify config (hard gate: RKVDEC2 main core must be enabled) ==="
