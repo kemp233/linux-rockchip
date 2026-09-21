@@ -234,6 +234,7 @@ int rknpu_mem_destroy_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	struct rknpu_session *session = NULL;
 	struct rknpu_mem_destroy args;
 	int ret = -EFAULT;
+	bool found = false;
 
 	if (unlikely(copy_from_user(&args, (struct rknpu_mem_destroy *)data,
 				    sizeof(struct rknpu_mem_destroy)))) {
@@ -265,27 +266,38 @@ int rknpu_mem_destroy_ioctl(struct rknpu_device *rknpu_dev, struct file *file,
 	list_for_each_entry_safe(entry, q, &session->list, head) {
 		if (entry == rknpu_obj) {
 			list_del(&entry->head);
+			found = true;
 			break;
 		}
 	}
 	spin_unlock(&rknpu_dev->lock);
 
-	if (rknpu_obj == entry) {
-		if (rknpu_obj->kv_addr && rknpu_obj->dmabuf) {
-			dma_resv_lock(rknpu_obj->dmabuf->resv, NULL);
-			dma_buf_vunmap(rknpu_obj->dmabuf, &rknpu_obj->vmap_map);
-			dma_resv_unlock(rknpu_obj->dmabuf->resv);
-			rknpu_obj->kv_addr = NULL;
-			iosys_map_clear(&rknpu_obj->vmap_map);
-			/* drop the extra reference taken for the kernel map */
-			dma_buf_put(rknpu_obj->dmabuf);
-		}
-
-		if (rknpu_obj->dmabuf && !rknpu_obj->owner)
-			dma_buf_put(rknpu_obj->dmabuf);
-
-		kfree(rknpu_obj);
+	/* If the object is not on this session's list it was already
+	 * freed by rknpu_release (fd close order: /dev/rknpu fd may be
+	 * closed before the dma_buf fd).  Skipping the vunmap here would
+	 * leak the dmabuf vmapping_counter and the extra get_dma_buf
+	 * reference taken at create time, which eventually trips
+	 * BUG_ON/WARN_ON in dma_buf_release. */
+	if (!found) {
+		LOG_ERROR("%s: object %#llx not in session list\n", __func__,
+			  (__u64)(uintptr_t)rknpu_obj);
+		return -EINVAL;
 	}
+
+	if (rknpu_obj->kv_addr && rknpu_obj->dmabuf) {
+		dma_resv_lock(rknpu_obj->dmabuf->resv, NULL);
+		dma_buf_vunmap(rknpu_obj->dmabuf, &rknpu_obj->vmap_map);
+		dma_resv_unlock(rknpu_obj->dmabuf->resv);
+		rknpu_obj->kv_addr = NULL;
+		iosys_map_clear(&rknpu_obj->vmap_map);
+		/* drop the extra reference taken for the kernel map */
+		dma_buf_put(rknpu_obj->dmabuf);
+	}
+
+	if (rknpu_obj->dmabuf && !rknpu_obj->owner)
+		dma_buf_put(rknpu_obj->dmabuf);
+
+	kfree(rknpu_obj);
 
 	return 0;
 }
