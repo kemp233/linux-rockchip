@@ -1407,7 +1407,7 @@ static int rk817_probe(struct snd_soc_component *component)
 	 * guard the driver takes the "ver > 0x4" branch and programs a wrong
 	 * APLL_CFG0/CFG4 pair, which shifts the DAC interpolation filter and
 	 * cuts off all low frequency from the output. */
-	if (((chip_name << 8) | chip_ver) == RK809_ID)
+	if ((((chip_name << 8) | chip_ver) & RK8XX_ID_MSK) == RK809_ID)
 		rk817->chip_ver = 0;
 	dev_info(component->dev, "%s: chip_name:0x%x, chip_ver:0x%x\n", __func__, chip_name, chip_ver);
 
