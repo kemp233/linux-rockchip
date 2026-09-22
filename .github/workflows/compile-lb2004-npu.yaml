@@ -1,0 +1,88 @@
+name: Build LB2004 RK3566 kernel with NPU fixes
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [rk-6.1-rkr7.2]
+    paths:
+      - 'drivers/rknpu/**'
+      - 'arch/arm64/boot/dts/rockchip/rk3566-lb2004.dts'
+      - '.github/workflows/compile-lb2004-npu.yaml'
+
+jobs:
+  Build:
+    name: Compile LB2004 kernel + dtb
+    runs-on: ubuntu-24.04-arm
+    if: ${{ github.repository_owner == 'kemp233' }}
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc
+
+      - name: Configure .config (rockchip BSP + LB2004 NPU)
+        run: |
+          cp arch/arm64/configs/rockchip_linux_defconfig .config
+          sed -i 's/CONFIG_WERROR=y/CONFIG_WERROR=n/' .config
+          printf '%s\n' \
+            'CONFIG_LOCALVERSION="-legacy-rockchip-rk3568-z96a"' \
+            'CONFIG_LOCALVERSION_AUTO=n' \
+            '# RKNPU: built-in (not module) so Image swap is enough' \
+            'CONFIG_ROCKCHIP_RKNPU=y' \
+            'CONFIG_ROCKCHIP_RKNPU_DMA_HEAP=y' \
+            'CONFIG_ROCKCHIP_RKNPU_DEBUG_FS=y' \
+            'CONFIG_DMABUF_HEAPS_ROCKCHIP=y' \
+            'CONFIG_DMABUF_HEAPS_ROCKCHIP_CMA_HEAP=y' >> .config
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
+          echo "=== verify config ==="
+          grep -E "^CONFIG_ROCKCHIP_RKNPU|^CONFIG_DMABUF_HEAPS_ROCKCHIP|^CONFIG_LOCALVERSION" .config
+
+      - name: Build Image
+        run: |
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            LOCALVERSION="-legacy-rockchip-rk3568-z96a" Image 2>&1 | tee /tmp/b1.log | tail -4
+          { grep -iE "error:|cannot find|No such file" /tmp/b1.log | head -20; } || true
+          ls -lh arch/arm64/boot/Image
+
+      - name: Build LB2004 dtb
+        run: |
+          make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            dtbs 2>&1 | tee /tmp/b2.log | tail -4 || true
+          ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
+
+      - name: Verify IOMMU enabled in dtb
+        run: |
+          dtc -I dtb -O dts arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb 2>/dev/null \
+            | grep -A9 "iommu@fde4b000" | head -11
+
+      - name: Upload artifacts (Image + dtb)
+        uses: actions/upload-artifact@v6
+        with:
+          name: lb2004-npu-kernel
+          path: |
+            arch/arm64/boot/Image
+            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
+          retention-days: 30
+
+      - name: Release
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          KVER=$(make -s ARCH=arm64 kernelrelease 2>/dev/null || \
+            awk '/^VERSION/{v=$3} /^PATCHLEVEL/{p=$3} /^SUBLEVEL/{s=$3} END{print v"."p"."s}' Makefile)
+          TAG="lb2004-npu-${KVER}"
+          echo "Kernel version: ${KVER} -> tag: ${TAG}"
+          gh release create "${TAG}" \
+            --repo kemp233/linux-rockchip \
+            --title "LB2004 kernel ${KVER} + NPU fixes" \
+            --notes "NPU fixes: get_dma_buf vmap ref, first-segment base, IOMMU on, GMAC RGMII | Linux ${KVER} | Commit: ${{ github.sha }}" \
+            arch/arm64/boot/Image \
+            arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb || echo "release already exists or failed - non-fatal"
+          echo "Release: https://github.com/kemp233/linux-rockchip/releases/tag/${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
