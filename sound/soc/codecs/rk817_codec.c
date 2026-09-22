@@ -1402,6 +1402,13 @@ static int rk817_probe(struct snd_soc_component *component)
 	chip_name = snd_soc_component_read(component, RK817_PMIC_CHIP_NAME);
 	chip_ver = snd_soc_component_read(component, RK817_PMIC_CHIP_VER);
 	rk817->chip_ver = (chip_ver & 0x0f);
+	/* RK809: the low nibble of RK817_PMIC_CHIP_VER is the chip model
+	 * coding (0x9a -> 0xa), NOT a codec silicon revision.  Without this
+	 * guard the driver takes the "ver > 0x4" branch and programs a wrong
+	 * APLL_CFG0/CFG4 pair, which shifts the DAC interpolation filter and
+	 * cuts off all low frequency from the output. */
+	if (((chip_name << 8) | chip_ver) == RK809_ID)
+		rk817->chip_ver = 0;
 	dev_info(component->dev, "%s: chip_name:0x%x, chip_ver:0x%x\n", __func__, chip_name, chip_ver);
 
 	/* always enable mclk, and will disable mclk in rk817_remove */
