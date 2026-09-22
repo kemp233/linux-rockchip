@@ -708,7 +708,7 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 						0x80);
 			/* power on dac ibias/l/r */
 			snd_soc_component_write(component, RK817_CODEC_ADAC_CFG1,
-						PWD_DACBIAS_ON | PWD_DACD_DOWN |
+						PWD_DACBIAS_ON | PWD_DACD_ON |
 						PWD_DACL_ON | PWD_DACR_ON);
 			snd_soc_component_update_bits(component,
 						      RK817_CODEC_DDAC_MUTE_MIXCTL,
@@ -731,7 +731,7 @@ static int rk817_playback_path_config(struct snd_soc_component *component,
 		snd_soc_component_write(component, RK817_CODEC_AHP_CFG0, 0x80);
 		/* power on dac ibias/l/r */
 		snd_soc_component_write(component, RK817_CODEC_ADAC_CFG1,
-					PWD_DACBIAS_ON | PWD_DACD_DOWN |
+					PWD_DACBIAS_ON | PWD_DACD_ON |
 					PWD_DACL_ON | PWD_DACR_ON);
 		snd_soc_component_update_bits(component,
 					      RK817_CODEC_DDAC_MUTE_MIXCTL,
@@ -1216,7 +1216,7 @@ static int rk817_digital_mute_dac(struct snd_soc_dai *dai, int mute, int stream)
 						PWD_DACL_DOWN | PWD_DACR_DOWN);
 			} else {
 				snd_soc_component_write(component, RK817_CODEC_ADAC_CFG1,
-						PWD_DACBIAS_ON | PWD_DACD_DOWN |
+						PWD_DACBIAS_ON | PWD_DACD_ON |
 						PWD_DACL_ON | PWD_DACR_ON);
 			}
 			rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 1);
@@ -1227,7 +1227,7 @@ static int rk817_digital_mute_dac(struct snd_soc_dai *dai, int mute, int stream)
 		case RING_HP:
 		case RING_HP_NO_MIC:
 			snd_soc_component_write(component, RK817_CODEC_ADAC_CFG1,
-					PWD_DACBIAS_ON | PWD_DACD_DOWN |
+					PWD_DACBIAS_ON | PWD_DACD_ON |
 					PWD_DACL_ON | PWD_DACR_ON);
 			rk817_codec_ctl_gpio(rk817, CODEC_SET_SPK, 0);
 			rk817_codec_ctl_gpio(rk817, CODEC_SET_HP, 1);
