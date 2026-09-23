@@ -289,23 +289,15 @@ static int rk817_reset(struct snd_soc_component *component)
 	snd_soc_component_write(component, RK817_CODEC_DDAC_POPD_DACST, 0x02);
 	snd_soc_component_write(component, RK817_CODEC_DI2S_CKM, 0x00);
 	snd_soc_component_write(component, RK817_CODEC_DTOP_DIGEN_CLKE, 0xff);
+	snd_soc_component_write(component, RK817_CODEC_DTOP_DIGEN_CLKE, 0x00);
+	/*
+	 * On the LB2004 (RK809, chip_ver 0x9a) the shipped Android 4.19 driver
+	 * only writes APLL_CFG1 here and keeps CFG0/CFG2/CFG3/CFG4 at their
+	 * hardware reset defaults (04/30/19/65).  Programming the values the
+	 * 5.10/6.1 driver uses (0c/2d/0c/95) shifts the DAC interpolation
+	 * filter and produces a whistle that tracks the signal frequency.
+	 */
 	snd_soc_component_write(component, RK817_CODEC_APLL_CFG1, 0x58);
-	snd_soc_component_write(component, RK817_CODEC_APLL_CFG2, 0x2d);
-	snd_soc_component_write(component, RK817_CODEC_APLL_CFG3, 0x0c);
-	snd_soc_component_write(component, RK817_CODEC_APLL_CFG5, 0x00);
-	snd_soc_component_write(component, RK817_CODEC_DTOP_DIGEN_CLKE, 0x00);
-	if (rk817->chip_ver <= 0x4) {
-		DBG("%s (%d): 0x4 and previous versions\n",
-		    __func__, __LINE__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
-	} else {
-		DBG("%s (%d): 0x4 version later\n",
-		    __func__, __LINE__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0xa5);
-	}
-	snd_soc_component_write(component, RK817_CODEC_DTOP_DIGEN_CLKE, 0x00);
 
 	return 0;
 }
@@ -477,17 +469,10 @@ static int rk817_codec_power_up(struct snd_soc_component *component, int type)
 						playback_power_up_list[i].value);
 		}
 
-		/* configure APLL CFG0/4 */
-		if (rk817->chip_ver <= 0x4) {
-			DBG("%s (%d): 0x4 and previous versions\n",
-			    __func__, __LINE__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
-		} else {
-			DBG("%s: 0x4 version later\n", __func__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0xa5);
-		}
+		/*
+		 * APLL CFG0/CFG4: left at hardware reset defaults, matching the
+		 * shipped Android 4.19 driver.  See the note in rk817_reset().
+		 */
 		rk817_restart_dac_digital_clk(component);
 	}
 
@@ -502,18 +487,10 @@ static int rk817_codec_power_up(struct snd_soc_component *component, int type)
 						capture_power_up_list[i].value);
 		}
 
-		/* configure APLL CFG0/4 */
-		if (rk817->chip_ver <= 0x4) {
-			DBG("%s (%d): 0x4 and previous versions\n",
-			    __func__, __LINE__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
-		} else {
-			DBG("%s: 0x4 version later\n", __func__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0xa5);
-		}
-
+		/*
+		 * APLL CFG0/CFG4: left at hardware reset defaults, matching the
+		 * shipped Android 4.19 driver.  See the note in rk817_reset().
+		 */
 		rk817_restart_adc_digital_clk(component);
 
 		if (rk817->mic_in_differential)
@@ -1084,42 +1061,19 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_component *component = dai->component;
 	struct rk817_codec_priv *rk817 = snd_soc_component_get_drvdata(component);
 	unsigned int rate = params_rate(params);
-	unsigned char apll_cfg3_val;
-	unsigned char sr_val;  /* Sample rate value for DACSRT/ADCSRT */
 	unsigned int ret = 0;
 
 	DBG("%s : pre rate = %d, cur sample rate = %dHz, stream = %s\n",
 	    __func__, rk817->rate, rate,
 	    substream->stream == SNDRV_PCM_STREAM_PLAYBACK ? "PLAYBACK" : "CAPTURE");
 
-	if (rk817->chip_ver <= 0x4) {
-		DBG("%s: 0x4 and previous versions\n", __func__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
-	} else {
-		DBG("%s: 0x4 version later\n", __func__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0xa5);
-	}
-
 	switch (rate) {
 	case 8000:
-		apll_cfg3_val = 0x03;
-		sr_val = 0x00;
-		break;
 	case 16000:
-		apll_cfg3_val = 0x06;
-		sr_val = 0x01;
-		break;
 	case 96000:
-		apll_cfg3_val = 0x18;
-		sr_val = 0x03;
-		break;
 	case 32000:
 	case 44100:
 	case 48000:
-		apll_cfg3_val = 0x0c;
-		sr_val = 0x02;
 		break;
 	default:
 		pr_err("Unsupported rate: %d\n", rate);
@@ -1137,6 +1091,13 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 	 * PDM capture uses independent clock path and does not use APLL or
 	 * the sample rate registers, so it skips configuration to avoid
 	 * affecting concurrent playback.
+	 *
+	 * NB: on the LB2004 (RK809, chip_ver 0x9a) the shipped Android 4.19
+	 * driver leaves APLL_CFG3 at its hardware reset default (0x19) and
+	 * never writes DACSRT during playback; audio is clean there.  Writing
+	 * the "48 kHz" value 0x0c here shifts the DAC interpolation filter and
+	 * produces a whistle that tracks the signal frequency.  Keep the reset
+	 * defaults unless a future chip revision is proven to need them.
 	 */
 	if ((rk817->rate != rate) &&
 	    !((substream->stream == SNDRV_PCM_STREAM_CAPTURE) && rk817->pdmdata_out_enable)) {
@@ -1144,11 +1105,6 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 		if (ret)
 			dev_warn(component->dev, "%s %d clk_set_rate %d failed\n",
 				 __func__, __LINE__, rk817->stereo_sysclk);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG3, apll_cfg3_val);
-		snd_soc_component_update_bits(component, RK817_CODEC_DDAC_SR_LMT0,
-					      DACSRT_MASK, sr_val);
-		snd_soc_component_update_bits(component, RK817_CODEC_DADC_SR_ACL0,
-					      ADCSRT_MASK, sr_val);
 
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 			rk817_restart_dac_digital_clk_and_apll(component);
