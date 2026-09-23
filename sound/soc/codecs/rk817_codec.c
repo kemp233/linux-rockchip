@@ -297,7 +297,7 @@ static int rk817_reset(struct snd_soc_component *component)
 	if (rk817->chip_ver <= 0x4) {
 		DBG("%s (%d): 0x4 and previous versions\n",
 		    __func__, __LINE__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
+		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
 		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
 	} else {
 		DBG("%s (%d): 0x4 version later\n",
@@ -481,7 +481,7 @@ static int rk817_codec_power_up(struct snd_soc_component *component, int type)
 		if (rk817->chip_ver <= 0x4) {
 			DBG("%s (%d): 0x4 and previous versions\n",
 			    __func__, __LINE__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
+			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
 			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
 		} else {
 			DBG("%s: 0x4 version later\n", __func__);
@@ -506,7 +506,7 @@ static int rk817_codec_power_up(struct snd_soc_component *component, int type)
 		if (rk817->chip_ver <= 0x4) {
 			DBG("%s (%d): 0x4 and previous versions\n",
 			    __func__, __LINE__);
-			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
+			snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
 			snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
 		} else {
 			DBG("%s: 0x4 version later\n", __func__);
@@ -1094,7 +1094,7 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 
 	if (rk817->chip_ver <= 0x4) {
 		DBG("%s: 0x4 and previous versions\n", __func__);
-		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x04);
+		snd_soc_component_write(component, RK817_CODEC_APLL_CFG0, 0x0c);
 		snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0x95);
 	} else {
 		DBG("%s: 0x4 version later\n", __func__);
