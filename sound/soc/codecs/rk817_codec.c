@@ -304,6 +304,8 @@ static int rk817_reset(struct snd_soc_component *component)
 
 static int rk817_restart_dac_digital_clk(struct snd_soc_component *component)
 {
+	struct rk817_codec_priv *rk817 = snd_soc_component_get_drvdata(component);
+
 	snd_soc_component_update_bits(component, RK817_CODEC_ADAC_CFG1,
 				      PWD_DACBIAS_MASK, PWD_DACBIAS_DOWN);
 	usleep_range(500, 600);
@@ -317,11 +319,30 @@ static int rk817_restart_dac_digital_clk(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component, RK817_CODEC_ADAC_CFG1,
 				      PWD_DACBIAS_MASK, PWD_DACBIAS_ON);
 
+	/*
+	 * Kick the DAC digital block with a real hardware write of the volume
+	 * register.  regmap (REGCACHE_FLAT) swallows snd_soc_component_write()
+	 * into cache and never flushes it, so the DAC never sees the volume
+	 * update and stays in its power-on state, which on the LB2004 produces
+	 * a whistle that tracks the signal frequency.  The shipped Android
+	 * driver shows the same symptom and the user can clear it there by
+	 * nudging the volume once - that write reaches the hardware and
+	 * re-initialises the DAC.  Bypass the cache here to reproduce that.
+	 */
+	regcache_cache_bypass(rk817->regmap, true);
+	snd_soc_component_write(component, RK817_CODEC_DDAC_VOLL,
+				rk817->spk_volume);
+	snd_soc_component_write(component, RK817_CODEC_DDAC_VOLR,
+				rk817->spk_volume);
+	regcache_cache_bypass(rk817->regmap, false);
+
 	return 0;
 }
 
 static int rk817_restart_dac_digital_clk_and_apll(struct snd_soc_component *component)
 {
+	struct rk817_codec_priv *rk817 = snd_soc_component_get_drvdata(component);
+
 	snd_soc_component_update_bits(component, RK817_CODEC_ADAC_CFG1,
 				      PWD_DACBIAS_MASK, PWD_DACBIAS_DOWN);
 	usleep_range(500, 600);
@@ -339,6 +360,14 @@ static int rk817_restart_dac_digital_clk_and_apll(struct snd_soc_component *comp
 	usleep_range(500, 600);
 	snd_soc_component_update_bits(component, RK817_CODEC_ADAC_CFG1,
 				      PWD_DACBIAS_MASK, PWD_DACBIAS_ON);
+
+	/* Same DAC digital-block kick as rk817_restart_dac_digital_clk() */
+	regcache_cache_bypass(rk817->regmap, true);
+	snd_soc_component_write(component, RK817_CODEC_DDAC_VOLL,
+				rk817->spk_volume);
+	snd_soc_component_write(component, RK817_CODEC_DDAC_VOLR,
+				rk817->spk_volume);
+	regcache_cache_bypass(rk817->regmap, false);
 
 	return 0;
 }
@@ -961,8 +990,10 @@ static int rk817_dac_vol_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct rk817_codec_priv *rk817 = snd_soc_component_get_drvdata(component);
 	unsigned int left_val, right_val;
 	unsigned int max_val = RK817_DAC_VOL_MAX;
+	int ret;
 
 	left_val = max_val - ucontrol->value.integer.value[0];
 	right_val = max_val - ucontrol->value.integer.value[1];
@@ -985,7 +1016,16 @@ static int rk817_dac_vol_put(struct snd_kcontrol *kcontrol,
 	ucontrol->value.integer.value[0] = max_val - left_val;
 	ucontrol->value.integer.value[1] = max_val - right_val;
 
-	return snd_soc_put_volsw(kcontrol, ucontrol);
+	/*
+	 * regcache (REGCACHE_FLAT) never flushes on this device, so the volume
+	 * write below would only land in software cache and the DAC keeps using
+	 * its old value.  Bypass the cache for this write like Android does.
+	 */
+	regcache_cache_bypass(rk817->regmap, true);
+	ret = snd_soc_put_volsw(kcontrol, ucontrol);
+	regcache_cache_bypass(rk817->regmap, false);
+
+	return ret;
 }
 
 static struct snd_kcontrol_new rk817_snd_controls[] = {
