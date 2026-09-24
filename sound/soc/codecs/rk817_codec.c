@@ -1114,6 +1114,8 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 	struct rk817_codec_priv *rk817 = snd_soc_component_get_drvdata(component);
 	unsigned int rate = params_rate(params);
 	unsigned int ret = 0;
+	unsigned int apll_cfg3_val;
+	unsigned int dacsrt_val;
 
 	DBG("%s : pre rate = %d, cur sample rate = %dHz, stream = %s\n",
 	    __func__, rk817->rate, rate,
@@ -1121,11 +1123,22 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 
 	switch (rate) {
 	case 8000:
+		apll_cfg3_val = 0x03;
+		dacsrt_val = 0x00;
+		break;
 	case 16000:
+		apll_cfg3_val = 0x06;
+		dacsrt_val = 0x01;
+		break;
 	case 96000:
+		apll_cfg3_val = 0x18;
+		dacsrt_val = 0x03;
+		break;
 	case 32000:
 	case 44100:
 	case 48000:
+		apll_cfg3_val = 0x0c;
+		dacsrt_val = 0x02;
 		break;
 	default:
 		pr_err("Unsupported rate: %d\n", rate);
@@ -1144,15 +1157,16 @@ static int rk817_hw_params(struct snd_pcm_substream *substream,
 	 * the sample rate registers, so it skips configuration to avoid
 	 * affecting concurrent playback.
 	 *
-	 * NB: on the LB2004 (RK809, chip_ver 0x9a) the shipped Android 4.19
-	 * driver leaves APLL_CFG3 at its hardware reset default (0x19) and
-	 * never writes DACSRT during playback; audio is clean there.  Writing
-	 * the "48 kHz" value 0x0c here shifts the DAC interpolation filter and
-	 * produces a whistle that tracks the signal frequency.  Keep the reset
-	 * defaults unless a future chip revision is proven to need them.
+	 * DACSRT (DDAC_SR_LMT0 low bits) selects the DAC interpolation filter
+	 * band.  Left at the hardware default 0x00 (8 kHz band) it attenuates
+	 * everything above ~4 kHz and the output sounds muffled/covered.
+	 * Program it per rate, as the 5.10 vendor driver does.
 	 */
 	if ((rk817->rate != rate) &&
 	    !((substream->stream == SNDRV_PCM_STREAM_CAPTURE) && rk817->pdmdata_out_enable)) {
+		snd_soc_component_write(component, RK817_CODEC_APLL_CFG3, apll_cfg3_val);
+		snd_soc_component_update_bits(component, RK817_CODEC_DDAC_SR_LMT0,
+					     DACSRT_MASK, dacsrt_val);
 		ret = clk_set_rate(rk817->mclk, rk817->stereo_sysclk);
 		if (ret)
 			dev_warn(component->dev, "%s %d clk_set_rate %d failed\n",
