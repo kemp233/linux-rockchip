@@ -292,12 +292,24 @@ static int rk817_reset(struct snd_soc_component *component)
 	snd_soc_component_write(component, RK817_CODEC_DTOP_DIGEN_CLKE, 0x00);
 	/*
 	 * On the LB2004 (RK809, chip_ver 0x9a) the shipped Android 4.19 driver
-	 * only writes APLL_CFG1 here and keeps CFG0/CFG2/CFG3/CFG4 at their
-	 * hardware reset defaults (04/30/19/65).  Programming the values the
-	 * 5.10/6.1 driver uses (0c/2d/0c/95) shifts the DAC interpolation
-	 * filter and produces a whistle that tracks the signal frequency.
+	 * only writes APLL_CFG1 here and keeps CFG0/CFG2/CFG3 at their hardware
+	 * reset defaults (04/30/19).  Programming the CFG0/CFG3 values the
+	 * 5.10/6.1 driver uses (0c/0c) shifts the DAC interpolation filter and
+	 * produces a whistle that tracks the signal frequency.
 	 */
 	snd_soc_component_write(component, RK817_CODEC_APLL_CFG1, 0x58);
+
+	/*
+	 * APLL_CFG4 must be 0xa5, not the hardware reset default 0x65.
+	 * The default VCO divider lands the APLL fractional spur in the audio
+	 * band, heard as a fixed high-frequency hiss behind every signal
+	 * (independent of volume, sample rate and signal frequency, and absent
+	 * on digital silence).  0xa5 moves the spur out of band.  The 5.10
+	 * driver writes 0xa5 too (chip_ver > 0x4 branch); the stock 6.1 driver
+	 * also had it in rk817_reset() and the playback power-up list.
+	 * Verified on the LB2004: 0x65 = hiss, 0xa5 = clean.
+	 */
+	snd_soc_component_write(component, RK817_CODEC_APLL_CFG4, 0xa5);
 
 	return 0;
 }
@@ -409,7 +421,7 @@ static struct rk817_reg_val_typ playback_power_up_list[] = {
 	/* {RK817_CODEC_APLL_CFG0, 0x04}, */
 	{RK817_CODEC_APLL_CFG1, 0x58},
 	{RK817_CODEC_APLL_CFG2, 0x2d},
-	/* {RK817_CODEC_APLL_CFG4, 0xa5}, */
+	{RK817_CODEC_APLL_CFG4, 0xa5},
 	{RK817_CODEC_APLL_CFG5, 0x00},
 
 	{RK817_CODEC_DI2S_RXCMD_TSD, 0x00},
@@ -447,7 +459,7 @@ static struct rk817_reg_val_typ capture_power_up_list[] = {
 	/* {RK817_CODEC_APLL_CFG0, 0x04}, */
 	{RK817_CODEC_APLL_CFG1, 0x58},
 	{RK817_CODEC_APLL_CFG2, 0x2d},
-	/* {RK817_CODEC_APLL_CFG4, 0xa5}, */
+	{RK817_CODEC_APLL_CFG4, 0xa5},
 	{RK817_CODEC_APLL_CFG5, 0x00},
 
 	/*{RK817_CODEC_DI2S_RXCMD_TSD, 0x00},*/
