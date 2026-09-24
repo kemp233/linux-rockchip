@@ -44,15 +44,6 @@
 			linux,cma-default;
 		};
 
-		/* 128MB DMA pool for NPU */
-		rknpu_reserved: rknpu {
-			compatible = "shared-dma-pool";
-			inactive;
-			reusable;
-			size = <0x0 0x08000000>;
-			alignment = <0x0 0x1000>;
-		};
-
 		/* ramoops for crash logs */
 		ramoops: ramoops@110000 {
 			compatible = "ramoops";
@@ -546,7 +537,6 @@
 
 /* NPU */
 &rknpu {
-	memory-region = <&rknpu_reserved>;
 	status = "okay";
 };
 
