@@ -206,6 +206,19 @@ struct panel_simple {
 
 	const struct panel_desc *desc;
 
+	/**
+	 * @bus_format_override: output bus format from the DT "bus-format"
+	 * property, taking precedence over desc->bus_format when set
+	 * (0 = unset).
+	 */
+	u32 bus_format_override;
+
+	/**
+	 * @bpc_override: bits per color from the DT "bpc" property, taking
+	 * precedence over desc->bpc when set (0 = unset).
+	 */
+	u32 bpc_override;
+
 	struct regulator *supply;
 	struct i2c_adapter *ddc;
 
@@ -475,11 +488,16 @@ static int panel_simple_get_non_edid_modes(struct panel_simple *panel,
 
 	if (panel->desc->bpc)
 		connector->display_info.bpc = panel->desc->bpc;
+	if (panel->bpc_override)
+		connector->display_info.bpc = panel->bpc_override;
 	if (panel->desc->size.width)
 		connector->display_info.width_mm = panel->desc->size.width;
 	if (panel->desc->size.height)
 		connector->display_info.height_mm = panel->desc->size.height;
-	if (panel->desc->bus_format)
+	if (panel->bus_format_override)
+		drm_display_info_set_bus_formats(&connector->display_info,
+						 &panel->bus_format_override, 1);
+	else if (panel->desc->bus_format)
 		drm_display_info_set_bus_formats(&connector->display_info,
 						 &panel->desc->bus_format, 1);
 	if (panel->desc->bus_flags)
@@ -887,6 +905,23 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc)
 	panel->enabled = false;
 	panel->prepared_time = 0;
 	panel->desc = desc;
+
+	/*
+	 * Vendor DTs describe the panel output bus format via a
+	 * "bus-format" property; without this, generic DT panels are
+	 * driven as RGB888 even when the DT says RGB666.
+	 */
+	of_property_read_u32(dev->of_node, "bus-format",
+			     &panel->bus_format_override);
+
+	/*
+	 * The bits-per-color of a generic DT panel likewise has to come from
+	 * the DT: the "simple-panel" timing parser never fills in desc->bpc,
+	 * so display_info.bpc keeps its default of 8 and encoders that pick
+	 * the output format from bpc (rockchip cdn-dp does exactly that)
+	 * drive the panel as RGB888 regardless of the advertised bus format.
+	 */
+	of_property_read_u32(dev->of_node, "bpc", &panel->bpc_override);
 
 	panel->supply = devm_regulator_get(dev, "power");
 	if (IS_ERR(panel->supply)) {

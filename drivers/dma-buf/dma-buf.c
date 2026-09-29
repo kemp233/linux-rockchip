@@ -140,7 +140,7 @@ static void dma_buf_release(struct dentry *dentry)
 	if (unlikely(!dmabuf))
 		return;
 
-	BUG_ON(dmabuf->vmapping_counter);
+	WARN_ON(dmabuf->vmapping_counter);
 
 	/*
 	 * If you hit this BUG() it could mean:

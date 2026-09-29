@@ -8,3 +8,4 @@ obj-$(CONFIG_AP6XXX) += bcmdhd/
 
 clean:
 	find . -name '*.o*' -exec rm -f {} \; 
+obj-$(CONFIG_RTL8822CS)	+= rtl8822cs/

@@ -571,6 +571,8 @@ static int rknpu_release(struct inode *inode, struct file *file)
 				IOSYS_MAP_INIT_VADDR(entry->kv_addr);
 			dma_buf_vunmap(entry->dmabuf, &map);
 			entry->kv_addr = NULL;
+			/* drop the extra reference taken for the kernel map */
+			dma_buf_put(entry->dmabuf);
 		}
 
 		dma_buf_unmap_attachment(entry->attachment, entry->sgt,

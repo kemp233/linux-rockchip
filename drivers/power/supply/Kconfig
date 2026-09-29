@@ -1038,3 +1038,10 @@ config NANOPI_ADC_POWER
 
 
 endif # POWER_SUPPLY
+
+config CHARGER_SC8886S
+	tristate "SouthChip SC8886S battery charger"
+	depends on I2C
+	help
+	  SouthChip SC8886S charger on Z96A (i2c0 0x6b). Provides real
+	  battery voltage/current/SOC from the charger own ADC.

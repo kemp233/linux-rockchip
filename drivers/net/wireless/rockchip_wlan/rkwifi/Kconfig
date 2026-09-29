@@ -54,3 +54,6 @@ config BCMDHD_STATIC_IF
 	bool "Enable wlan1 support"
 	help
 	  default to add wlan1 interface
+
+# Realtek 8822C SDIO (RTL8822CS) - vendored for Z96A
+source "drivers/net/wireless/rockchip_wlan/rkwifi/rtl8822cs/Kconfig"
