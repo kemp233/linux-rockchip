@@ -969,6 +969,23 @@ static int rk817_shutdown_prepare(struct sys_off_data *data)
 				 RK817_SLPPIN_FUNC_MSK, SLPPIN_DN_FUN);
 	if (ret)
 		dev_err(&rk808_i2c_client->dev, "Failed to shutdown device!\n");
+	/*
+	 * Z96A (RK809): set the sleep-pin polarity to HIGH. The write above
+	 * arms "power down when SLEEP pin goes down"; on this board the SLEEP
+	 * pin sits LOW while the system runs and RISES when the SoC halts,
+	 * so with the default (low-trigger) polarity the PMIC waits forever
+	 * and poweroff leaves the machine halted but powered (screen dark,
+	 * buttons dead, 10s force-off needed). With the polarity HIGH the
+	 * rising pin fires the power down at halt. Verified on the real
+	 * board: writing SYS_CFG(3)=0x30 then `systemctl poweroff` cuts
+	 * power cleanly; without it, hang.
+	 * (The SLPPOL_H write that was supposed to happen here lives in a
+	 * block guarded by rk808->pins->power_off, which is never assigned
+	 * anywhere in this tree, so it never ran.)
+	 */
+	regmap_update_bits(rk808->regmap,
+			   RK817_SYS_CFG(3),
+			   RK817_SLPPOL_MSK, RK817_SLPPOL_H);
 	/* pmic need the SCL clock to synchronize register */
 	mdelay(2);
 	return ret;
