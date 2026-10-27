@@ -681,10 +681,19 @@ error:
 	 * The Z96A board has a power domain whose idle-ack never completes,
 	 * on every kernel this board has run (the rk-6.1-rkr5.1 branch carried
 	 * a non-fatal workaround for exactly this). rkr7.2 turned the timeout
-	 * into an unconditional panic, which kills the boot at iommu probe.
-	 * Degrade to the rkr5.1 semantics instead: leave the domain off, keep
-	 * booting. The devices behind the stuck domain won't work.
+	 * into an unconditional panic, which kills the boot at iommu probe
+	 * before the dev_err naming the domain ever reaches a console.
+	 *
+	 * Upstream 02600c6fba83 makes that panic honour the opt-in "always_on"
+	 * module parameter, so keep its intent: with the parameter set, return
+	 * the error and let the callers' existing dev_err paths report it.
+	 * Without it, degrade to the rkr5.1 semantics instead - leave the
+	 * domain as-is and keep booting. The devices behind the stuck domain
+	 * won't work, but the machine comes up.
 	 */
+	if (pm_domain_always_on)
+		return ret;
+
 	pr_err("rockchip-pmu: non-fatal error on domain '%s', continuing boot\n",
 	       genpd->name);
 	return 0;
@@ -1103,7 +1112,8 @@ static int rockchip_do_pmu_set_power_domain(struct rockchip_pm_domain *pd,
 	return ret;
 
 error:
-	panic("panic_on_set_domain set ...\n");
+	if (!pm_domain_always_on)
+		panic("panic_on_set_domain set ...\n");
 	return ret;
 }
 
@@ -2002,6 +2012,12 @@ static int rockchip_pm_domain_probe(struct platform_device *pdev)
 	if (!np) {
 		dev_err(dev, "device tree node not found\n");
 		return -ENODEV;
+	}
+
+	/* Keep RM66 bootable until the cold NPU handshake is fixed. */
+	if (of_machine_is_compatible("elron,eltay-rm66")) {
+		pm_domain_always_on = true;
+		dev_info(dev, "ELTAY RM66: enable temporary always-on workaround\n");
 	}
 
 	pmu_info = device_get_match_data(dev);
