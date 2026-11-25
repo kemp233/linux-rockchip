@@ -38,21 +38,24 @@ jobs:
             'CONFIG_ROCKCHIP_RKNPU_DEBUG_FS=y' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP=y' \
             'CONFIG_DMABUF_HEAPS_ROCKCHIP_CMA_HEAP=y' >> .config
-          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3 || true
+          test -s drivers/net/wireless/rockchip_wlan/rkwifi/rtl8822cs/Kconfig
+          yes "" | make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig 2>&1 | tail -3
           echo "=== verify config ==="
           grep -E "^CONFIG_ROCKCHIP_RKNPU|^CONFIG_DMABUF_HEAPS_ROCKCHIP|^CONFIG_LOCALVERSION" .config
 
       - name: Build Image
         run: |
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-            LOCALVERSION="-legacy-rockchip-rk3568-z96a" Image 2>&1 | tee /tmp/b1.log | tail -4
+            LOCALVERSION="-legacy-rockchip-rk3568-z96a" Image 2>&1 | tee /tmp/b1.log | tail -40
+          test "${PIPESTATUS[0]}" -eq 0
           { grep -iE "error:|cannot find|No such file" /tmp/b1.log | head -20; } || true
           ls -lh arch/arm64/boot/Image
 
       - name: Build LB2004 dtb
         run: |
           make -j$(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-            dtbs 2>&1 | tee /tmp/b2.log | tail -4 || true
+            dtbs 2>&1 | tee /tmp/b2.log | tail -40
+          test "${PIPESTATUS[0]}" -eq 0
           ls -lh arch/arm64/boot/dts/rockchip/rk3566-lb2004.dtb
 
       - name: Verify IOMMU enabled in dtb
