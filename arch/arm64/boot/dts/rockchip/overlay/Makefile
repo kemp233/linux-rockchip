@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
+dtbo-$(CONFIG_ARCH_ROCKCHIP) += rk35xx-rk3566-eltay-rm66-pdm.dtbo
 dtbo-$(CONFIG_ARCH_ROCKCHIP) += \
 	armsom-cm5-io-camera-imx219-cs0.dtbo \
 	armsom-cm5-io-camera-ov13850-cs1.dtbo \
@@ -133,6 +134,12 @@ dtbo-$(CONFIG_ARCH_ROCKCHIP) += \
 	youyeetoo-yy3588-camera1-gc8034.dtbo \
 	youyeetoo-yy3588-display-dsi0.dtbo \
 	youyeetoo-yy3588-display-dsi1.dtbo \
+	lckfb-tspi-3m-dsi-1200x1920-10-1inch.dtbo \
+	lckfb-tspi-3m-dsi-c41409463.dtbo \
+	lckfb-tspi-3m-dsi-c42388916.dtbo \
+	lckfb-tspi-3m-ec20-4g.dtbo \
+	lckfb-tspi-3m-pcie.dtbo \
+	lckfb-tspi-3m-sata.dtbo \
 	khadas-edge2-display-dsi0.dtbo \
 	khadas-edge2-display-dsi1.dtbo \
 	khadas-edge2-cam1.dtbo \
@@ -362,6 +369,7 @@ dtbo-$(CONFIG_ARCH_ROCKCHIP) += \
 	recomputer-rk3576-devkit-40pin-uart3.dtbo \
 	recomputer-rk3576-devkit-40pin-uart5.dtbo \
 	recomputer-rk3576-devkit-halow-wifi.dtbo \
+	recomputer-rk3576-industrial-halow-wifi.dtbo \
 	recomputer-rk3576-devkit-cam0-rpi-v2.dtbo \
 	recomputer-rk3576-devkit-cam0-rpi-v3.dtbo \
 	recomputer-rk3576-devkit-cam1-rpi-v2.dtbo \
